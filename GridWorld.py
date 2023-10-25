@@ -130,7 +130,11 @@ def main():
     
     # Set up state Space
     rewards = world.grid
+    
+    # Make goal large positive value in order to incentivize movement towards it
     rewards[terminal_state[0], terminal_state[1]] = 100
+    # Make walls large negative values but prevent movement into them?
+    
     print(rewards)
     
     # Actions - down, left, right and up
