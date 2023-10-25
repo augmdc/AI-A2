@@ -11,6 +11,10 @@ The robot's score reflects the rewards it collects and penalties it incurs.
 import pygame
 import numpy as np
 import random
+
+# Imports of custom classes
+import MDP
+
 # Constants for our display
 GRID_SIZE = 10  # Easily change this value
 CELL_SIZE = 60  # Adjust this based on your display preferences
@@ -122,13 +126,17 @@ def main():
     """Main loop"""
     screen, clock = setup_pygame()
     world = GridWorld()
+    terminal_state = world.goal
     
-    # State Space
+    # Set up state Space
     rewards = world.grid
+    rewards[terminal_state[0], terminal_state[1]] = 100
     print(rewards)
     
-    # Actions
+    # Actions - down, left, right and up
     actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+    
+    #value_iteration(world, 1, rewards, actions, None)
     
     
     running = True
