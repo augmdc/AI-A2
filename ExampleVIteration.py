@@ -40,9 +40,9 @@ noise_prob = 0.2
 # Possible actions that the agent can take: move left, up, right, or down.
 actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
 
+iterations = 100
 
 # Value Iteration process
-iterations = 10
 for it in range(iterations):
     # Temporary matrix to hold the updated values during this iteration.
     new_values = np.zeros((n, m))
