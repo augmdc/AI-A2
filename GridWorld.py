@@ -22,7 +22,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-WALL_VALUE = -np.inf
+WALL_VALUE = np.inf
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
 WALL_COLOR = (0, 0, 0)
@@ -60,13 +60,13 @@ class GridWorld:
         """Move the robot in a given direction."""
         x, y = self.robot_pos
         # Conditions check for boundaries and walls
-        if direction == "up" and x > 0 and self.grid[x-1][y] != np.inf:
+        if direction == "up" and x > 0 and self.grid[x-1][y] != WALL_VALUE:
             x -= 1
-        elif direction == "down" and x < self.size-1 and self.grid[x+1][y] != np.inf:
+        elif direction == "down" and x < self.size-1 and self.grid[x+1][y] != WALL_VALUE:
             x += 1
-        elif direction == "left" and y > 0 and self.grid[x][y-1] != np.inf:
+        elif direction == "left" and y > 0 and self.grid[x][y-1] != WALL_VALUE:
             y -= 1
-        elif direction == "right" and y < self.size-1 and self.grid[x][y+1] != np.inf:
+        elif direction == "right" and y < self.size-1 and self.grid[x][y+1] != WALL_VALUE:
             y += 1
         reward = self.grid[x][y] - 1  # step penalty
         self.robot_pos = (x, y)
@@ -81,11 +81,13 @@ class GridWorld:
             for j in range(self.size):
                 if (i, j) == self.robot_pos:
                     row += 'R '
-                elif self.grid[i][j] == np.inf:
+                elif self.grid[i][j] == WALL_VALUE:
                     row += '# '
                 else:
                     row += '. '
             print(row)
+            
+    def move_based_on_final_policy
 
 def setup_pygame():
     pygame.init()
@@ -101,7 +103,7 @@ def draw_grid(world, screen):
             # Determine cell color based on its value
             color = EMPTY_COLOR
             cell_value = world.grid[i][j]
-            if cell_value == np.inf:
+            if cell_value == WALL_VALUE:
                 color = WALL_COLOR
             elif cell_value == GOLD_REWARD:  # Gold
                 color = GOLD_COLOR
@@ -144,11 +146,11 @@ def main():
     noise_prob = 0.2
     actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
     
-    final_values = MDP.value_iteration(n, n, actions, rewards, values, noise_prob, living_reward)
-    policy = MDP.final_policy(n, n, rewards, final_values)
-    print(policy)
+    #final_values = MDP.value_iteration(n, n, actions, rewards, values, noise_prob, living_reward)
+    #policy = MDP.final_policy(n, n, rewards, final_values)
+    #print(policy)
     
-    s = input()
+    #s = input()
     
     running = True
     while running:

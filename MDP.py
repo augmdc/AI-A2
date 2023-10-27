@@ -8,13 +8,16 @@ Created on Tue Oct 24 15:36:20 2023
 
 import numpy as np
 
+WALL_VALUE = np.inf
+
+# NOT COMPLETED
 # Equivalent of R(s, a ,s')
 # Computes the reward of moving from one state to another
 # state is a tuple indicating x, y coordinates
 # Edge cases: if next state is either a wall or the border, reward function returns the living reward
 def reward_function(world, state, action, steps):
     n = world.size
-    if world[state[0] + action[0], state[1] + action[1]] != -np.inf and (state[0] + action[0] != n-1 or state[0] + action[0] != -1) and (state[1] + action[1] != n-1 or state[1] + action[1] != -1):
+    if world[state[0] + action[0], state[1] + action[1]] != WALL_VALUE and (state[0] + action[0] != n-1 or state[0] + action[0] != -1) and (state[1] + action[1] != n-1 or state[1] + action[1] != -1):
         if world[state[0] + action[0], state[1] + action[1]] == 10: # If reward, apply discounting
             return world[state[0] + action[0], state[1] + action[1]] - 1 * (0.9 ** steps)
         else:
@@ -57,10 +60,7 @@ def compute_difference(arr1, arr2):
 def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
     values = np.zeros((n, m))
     
-    # NOTE: ITERATIONS IS JUST FOR TESTING. SHOULD ONLY STOP WHEN CHANGES TO V ARE <0.001
-    
-    # While the change between iterations is less than 0.0001
-    # Change between iterations defined as the average of the absolute difference between each set of values
+    # While the change between iterations is less than 0.0001, run the value iteratiob process
     difference= np.inf
     it = 0
     while difference > 0.000001:
@@ -72,7 +72,7 @@ def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
         for i in range(n):
             for j in range(m):
                 # If the current cell is a terminal state, penalty, reward or wall, keep it
-                if rewards[i, j] == 10 or rewards[i, j] == -10 or rewards[i, j] == 100 or rewards[i, j] == np.inf:
+                if rewards[i, j] == 10 or rewards[i, j] == -10 or rewards[i, j] == 100: #or rewards[i, j] == WALL_VALUE:
                     new_values[i, j] = rewards[i, j]
                     continue
                     
@@ -86,8 +86,10 @@ def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
                         # For each action-action pair, calculate the Q*(s, a) values
                         ni, nj = i + prob["action"][0], j + prob["action"][1]
                         
-                        if 0 <= ni < n and 0 <= nj < m and values[ni, nj] != -np.inf:
+                        # TO-DO: discount only applies to rewards, not to penalties or zero values!
+                        if 0 <= ni < n and 0 <= nj < m and values[ni, nj] !=  WALL_VALUE:
                             expected_value += prob["transition_prob"] * 0.9 * (living_reward + values[ni, nj])
+                            
                         else: # If the action results in hitting the wall/edge of the map, bounce back
                             expected_value += prob["transition_prob"] * 0.9 * (living_reward + values[i, j])
                         
@@ -110,12 +112,13 @@ def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
         print("-----------------------------")
     return values
         
-def final_policy(n, m, rewards, values):
+def final_policy(n, m, rewards, values, actions):
     # Compute the policy based on the final state values
     final_policy = np.zeros((n, m), dtype=object)  # Change dtype to object to allow strings and numbers
 
     for i in range(n):
         for j in range(m):
+            # If terminal state
             if rewards[i][j] == 100: #rewards[i][j] == 10 or rewards[i][j] == -10
                 final_policy[i][j] = "*"
                 continue
@@ -124,9 +127,9 @@ def final_policy(n, m, rewards, values):
             action_values = []
             for action in actions:
                 ni, nj = i + action[0], j + action[1]
-                if 0 <= ni < n and 0 <= nj < m and values[ni, nj] != -np.inf:
+                if 0 <= ni < n and 0 <= nj < m and values[ni, nj] != np.inf:
                     action_values.append(values[ni][nj])
-                else:  # boundary case or wall case, stay in the same state
+                else:  # boundary case, stay in the same state
                     action_values.append(values[i][j])
 
             # Choose the action that leads to the highest state value
@@ -141,6 +144,7 @@ def final_policy(n, m, rewards, values):
     #print(symbolic_policy)
     return symbolic_policy
 
+"""
 # Grid size
 n, m = 4, 3
 
@@ -176,5 +180,6 @@ iterations = 100
 
 final_values = value_iteration(4, 3, actions, rewards, values, noise_prob, living_reward)
 print(final_policy(n, m, rewards, final_values))
+"""
 
 
