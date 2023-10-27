@@ -22,6 +22,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
+WALL_VALUE = -np.inf
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
 WALL_COLOR = (0, 0, 0)
@@ -49,7 +50,7 @@ class GridWorld:
                 if (i, j) != self.start and (i, j) != self.goal:
                     rand_num = random.random()
                     if rand_num < 0.1:  # 10% chance for a wall
-                        self.grid[i][j] = np.inf
+                        self.grid[i][j] = WALL_VALUE
                     elif rand_num < 0.2:  # 20% chance for gold
                         self.grid[i][j] = GOLD_REWARD
                     elif rand_num < 0.3:  # 30% chance for a trap
@@ -133,15 +134,21 @@ def main():
     
     # Make goal large positive value in order to incentivize movement towards it
     rewards[terminal_state[0], terminal_state[1]] = 100
-    # Make walls large negative values but prevent movement into them?
     
     print(rewards)
     
-    # Actions - down, left, right and up
+    n = world.size
+    living_reward = -1
+    values = np.zeros((n, n))
+    gamma = 0.9
+    noise_prob = 0.2
     actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
     
-    #value_iteration(world, 1, rewards, actions, None)
+    final_values = MDP.value_iteration(n, n, actions, rewards, values, noise_prob, living_reward)
+    policy = MDP.final_policy(n, n, rewards, final_values)
+    print(policy)
     
+    s = input()
     
     running = True
     while running:

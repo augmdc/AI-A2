@@ -35,20 +35,44 @@ def transition_probability(all_actions, noise_prob, action_performed):
         probs.append({"action": possible_action, "transition_prob": transition_prob})
     return probs
 
+def compute_difference(arr1, arr2):
+    if len(arr1) != len(arr2) or len(arr1[0]) != len(arr2[0]):
+        raise ValueError("Input arrays must have the same dimensions.")
+
+    n = len(arr1)
+    m = len(arr1[0])
+
+    total_difference = 0
+
+    for i in range(n):
+        for j in range(m):
+            total_difference += abs(arr1[i][j] - arr2[i][j])
+
+    average_difference = total_difference / (n * m)
+    
+    return average_difference
+
 # Equivalent of V*(s)
 # Returns a grid with each cell representing values
-def value_iteration(n, m, iterations, actions, rewards, values, noise_prob, gamma, living_reward):
+def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
     values = np.zeros((n, m))
     
     # NOTE: ITERATIONS IS JUST FOR TESTING. SHOULD ONLY STOP WHEN CHANGES TO V ARE <0.001
-    for it in range(iterations):
+    
+    # While the change between iterations is less than 0.0001
+    # Change between iterations defined as the average of the absolute difference between each set of values
+    difference= np.inf
+    it = 0
+    while difference > 0.000001:
         # Temporary matrix to hold the updated values during this iteration.
+        old_values = values
+        
         new_values = np.zeros((n, m))
         # For each cell
         for i in range(n):
             for j in range(m):
-                # If the current cell is a terminal state, penalty, reward or wall
-                if rewards[i, j] == 10 or rewards[i, j] == -10: #or rewards[i, j] == 100 or rewards[i, j] == -np.inf:
+                # If the current cell is a terminal state, penalty, reward or wall, keep it
+                if rewards[i, j] == 10 or rewards[i, j] == -10 or rewards[i, j] == 100 or rewards[i, j] == np.inf:
                     new_values[i, j] = rewards[i, j]
                     continue
                     
@@ -62,10 +86,10 @@ def value_iteration(n, m, iterations, actions, rewards, values, noise_prob, gamm
                         # For each action-action pair, calculate the Q*(s, a) values
                         ni, nj = i + prob["action"][0], j + prob["action"][1]
                         
-                        if 0 <= ni < n and 0 <= nj < m:
-                            expected_value += prob["transition_prob"] * gamma * (living_reward + values[ni, nj])
-                        else: # If the action results in hitting the wall, bounce back
-                            expected_value += prob["transition_prob"] * gamma * (living_reward + values[i, j])
+                        if 0 <= ni < n and 0 <= nj < m and values[ni, nj] != -np.inf:
+                            expected_value += prob["transition_prob"] * 0.9 * (living_reward + values[ni, nj])
+                        else: # If the action results in hitting the wall/edge of the map, bounce back
+                            expected_value += prob["transition_prob"] * 0.9 * (living_reward + values[i, j])
                         
                     cell_values.append(expected_value)
                     
@@ -74,15 +98,48 @@ def value_iteration(n, m, iterations, actions, rewards, values, noise_prob, gamm
                 
         # Update the value function with the new computed values.
         values = new_values
-
+        
+        # Compare the old_values to the iterated ones
+        difference = compute_difference(old_values, values)
+        
+        it += 1
         # Display the value function for this iteration.
         print(f"Iteration {it + 1}")
         for row in values:
             print(" ".join(f"{x:7.2f}" for x in row))
         print("-----------------------------")
+    return values
         
-def final_policy():
-    return 1
+def final_policy(n, m, rewards, values):
+    # Compute the policy based on the final state values
+    final_policy = np.zeros((n, m), dtype=object)  # Change dtype to object to allow strings and numbers
+
+    for i in range(n):
+        for j in range(m):
+            if rewards[i][j] == 100: #rewards[i][j] == 10 or rewards[i][j] == -10
+                final_policy[i][j] = "*"
+                continue
+
+            # For each action, compute the resulting state and its value
+            action_values = []
+            for action in actions:
+                ni, nj = i + action[0], j + action[1]
+                if 0 <= ni < n and 0 <= nj < m and values[ni, nj] != -np.inf:
+                    action_values.append(values[ni][nj])
+                else:  # boundary case or wall case, stay in the same state
+                    action_values.append(values[i][j])
+
+            # Choose the action that leads to the highest state value
+            best_action_idx = np.argmax(action_values)
+            final_policy[i][j] = best_action_idx
+
+    # Convert numeric policy to direction symbols, leaving "*" as is
+    directions_map = {0: "←", 1: "↑", 2: "→", 3: "↓", "*": "*"}
+    symbolic_policy = np.vectorize(directions_map.get)(final_policy)
+
+    # Print the final symbolic policy
+    #print(symbolic_policy)
+    return symbolic_policy
 
 # Grid size
 n, m = 4, 3
@@ -98,7 +155,7 @@ rewards = np.array([
 
 # Living reward (or penalty) is a cost for each move the agent makes.
 # This encourages the agent to find a goal state as quickly as possible.
-living_reward = 0
+living_reward = -1
 
 # Initialize the value function to zeros. This matrix holds the expected cumulative rewards
 # for each state under the current policy.
@@ -117,9 +174,7 @@ actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
 
 iterations = 100
 
-print(transition_probability(actions, 0.2, (0 ,1)))
+final_values = value_iteration(4, 3, actions, rewards, values, noise_prob, living_reward)
+print(final_policy(n, m, rewards, final_values))
 
-#for prob in probs:
-    #print(prob["action"][0])
 
-probs = value_iteration(4, 3, iterations, actions, rewards, values, noise_prob, gamma, living_reward)
