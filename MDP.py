@@ -9,21 +9,7 @@ Created on Tue Oct 24 15:36:20 2023
 import numpy as np
 
 WALL_VALUE = np.inf
-
-# NOT COMPLETED
-# Equivalent of R(s, a ,s')
-# Computes the reward of moving from one state to another
-# state is a tuple indicating x, y coordinates
-# Edge cases: if next state is either a wall or the border, reward function returns the living reward
-def reward_function(world, state, action, steps):
-    n = world.size
-    if world[state[0] + action[0], state[1] + action[1]] != WALL_VALUE and (state[0] + action[0] != n-1 or state[0] + action[0] != -1) and (state[1] + action[1] != n-1 or state[1] + action[1] != -1):
-        if world[state[0] + action[0], state[1] + action[1]] == 10: # If reward, apply discounting
-            return world[state[0] + action[0], state[1] + action[1]] - 1 * (0.9 ** steps)
-        else:
-            return world[state[0] + action[0], state[1] + action[1]] - 1
-    else:
-        return -1 # Only the living reward returned if it is a wall or the edge of the map
+GOAL_REWARD = 112
 
 # Equivalent of T(s, a, s')
 # Computes the probability of moving from state s to state s' when performing an action
@@ -60,7 +46,17 @@ def compute_difference(arr1, arr2):
 def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
     values = np.zeros((n, m))
     
-    # While the change between iterations is less than 0.0001, run the value iteratiob process
+    # NEXT SECTION CAN BE DELETED IN FUTURE
+    # Experiment: put in rewards and penalties into values array
+    """
+    for i in range(n):
+        for j in range(m):
+            if rewards[i, j] == -10 or rewards[i, j] == 10:
+                values[i, j] = rewards[i, j]
+    """
+    # Experiment: put in rewards and penalties into values array        
+    
+    # While the change between iterations is less than 0.0001, run the value iteration process
     difference= np.inf
     it = 0
     while difference > 0.000001:
@@ -72,7 +68,7 @@ def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
         for i in range(n):
             for j in range(m):
                 # If the current cell is a terminal state, penalty, reward or wall, keep it
-                if rewards[i, j] == 10 or rewards[i, j] == -10 or rewards[i, j] == 100: #or rewards[i, j] == WALL_VALUE:
+                if rewards[i, j] == GOAL_REWARD or rewards[i, j] == -10 or rewards[i, j] == 10:
                     new_values[i, j] = rewards[i, j]
                     continue
                     
@@ -86,7 +82,9 @@ def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
                         # For each action-action pair, calculate the Q*(s, a) values
                         ni, nj = i + prob["action"][0], j + prob["action"][1]
                         
-                        # TO-DO: discount only applies to rewards, not to penalties or zero values!
+                        # Reward function is already implemented here
+                        
+                        
                         if 0 <= ni < n and 0 <= nj < m and values[ni, nj] !=  WALL_VALUE:
                             expected_value += prob["transition_prob"] * 0.9 * (living_reward + values[ni, nj])
                             
@@ -119,7 +117,7 @@ def final_policy(n, m, rewards, values, actions):
     for i in range(n):
         for j in range(m):
             # If terminal state
-            if rewards[i][j] == 100: #rewards[i][j] == 10 or rewards[i][j] == -10
+            if rewards[i][j] == GOAL_REWARD: #rewards[i][j] == 10 or rewards[i][j] == -10
                 final_policy[i][j] = "*"
                 continue
 
