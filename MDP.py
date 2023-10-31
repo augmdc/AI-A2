@@ -83,8 +83,6 @@ def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
                         ni, nj = i + prob["action"][0], j + prob["action"][1]
                         
                         # Reward function is already implemented here
-                        
-                        
                         if 0 <= ni < n and 0 <= nj < m and values[ni, nj] !=  WALL_VALUE:
                             expected_value += prob["transition_prob"] * 0.9 * (living_reward + values[ni, nj])
                             
