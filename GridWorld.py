@@ -34,7 +34,8 @@ EMPTY_COLOR = (255, 255, 255)
 GOLD_COLOR = (255, 255, 0)  # Yellow
 TRAP_COLOR = (255, 0, 0)   # Red
 
-random.seed(100)
+# Change random seed for different results
+random.seed(64)
 
 class GridWorld:
     def __init__(self, size=GRID_SIZE):
@@ -112,7 +113,53 @@ class GridWorld:
         self.grid[x][y] = 0  # Clear the cell after the robot moves
         self.score += reward
         return reward
+    
+    # Moves robot multiple times for an "episode"
+    def Q_learning(world, episodes, actions, gamma, epsilon, alpha, living_reward):
+        q_values = np.zeros(10, 10, 4)
         
+        # Every iteration is an episode
+        # Decrease epsilon after every episode
+        min_epsilon = 0.1
+        decay_rate = 0.01
+
+        for i in range(episodes):
+            steps = 0
+            i, j = world.robot_pos
+            while steps < 10:
+                
+                
+                #Exploration
+                if np.random.rand() < epsilon:
+                    action_index = np.random.randint(0, len(actions))
+                    actual_action = actions[action_index]
+                # Exploitation
+                else:
+                    # Select action to take based on greatest q-value
+                    optimal_action_num = np.argmax(q_values[i, j])
+                    actual_action = actions[optimal_action_num]
+                    
+                directions = ["left", "right", "up", "down"]
+                # Create a dictionary using a loop
+                action_direction_dict = {}
+                for action, direction in zip(actions, directions):
+                    action_direction_dict[action] = direction
+                    
+                direction_to_move_in = action_direction_dict[actual_action]
+                world.move(direction_to_move_in)
+                    
+                pi, pj = i, j # Past position
+                i, j = world.robot_pos # Current position
+                    
+                # Q-learning update rule:
+                # 1. Calculate the sample using the reward and the maximum Q-value of the next state
+                sample = world.grid[pi , pj] + gamma * np.max(q_values[i, j]) + living_reward
+
+                # 2. Update Q-value using the Q-learning update rule (weighted average)
+                q_values[pi, pj, action_index] = (1 - alpha) * q_values[pi, pj, action_index] + alpha * sample
+                
+        return q_values
+                
 
 def setup_pygame():
     pygame.init()
@@ -156,16 +203,20 @@ def main():
     world = GridWorld()
     terminal_state = world.goal
     
+    running = True
+    
+    """
+    MDP Variable Values
+    """
+    
     # Set up State Space
     rewards = world.grid
     
     # Make goal large positive value in order to incentivize movement towards it
     rewards[terminal_state[0], terminal_state[1]] = GOAL_REWARD
-    
     print(rewards)
     
     n = world.size
-    living_reward = -1
     values = np.zeros((n, n))
     noise_prob = 0.2
     actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -174,11 +225,15 @@ def main():
     print(final_values)
     policy = QLearning.Qfinal_policy(n, n, rewards, final_values, actions)
     print(policy)
-    #sys.exit()
-    
-    running = True
     move_counter = 0  # Initialize a counter
     move_delay = 10  # Set the delay in game loops (adjust as needed)
+    
+    algorithm = ""
+    while algorithm != "0" and algorithm != "1":
+        algorithm = input("Input either a 0 or 1. 0 - MDP, 1 - Q-Learning\n")
+        print(algorithm)
+    
+    algorithm = int(algorithm)
 
     while running:
         # Rendering
@@ -193,19 +248,20 @@ def main():
             #if event.type == pygame.KEYDOWN:
                 #world.move_based_on_final_policy(policy)
         
-        
-        if move_counter >= move_delay:
-            world.move_based_on_final_policy(policy)
-            move_counter = 0  # Reset the counter
-            print(f"Current Score: {world.score}")
-            # Check if the robot reached the goal
-            if world.robot_pos == world.goal:
-                print("Robot reached the goal!")
-                print(f"Final Score: {world.score}")
-                running = False
-                break
+        # MDP Section
+        if algorithm == 0:
+            if move_counter >= move_delay:
+                world.move_based_on_final_policy(policy)
+                move_counter = 0  # Reset the counter
+                print(f"Current Score: {world.score}")
+                # Check if the robot reached the goal
+                if world.robot_pos == world.goal:
+                    print("Robot reached the goal!")
+                    print(f"Final Score: {world.score}")
+                    running = False
+                    break
 
-        move_counter += 1  # Increment the counter
+            move_counter += 1  # Increment the counter
 
     pygame.quit()
     sys.exit()
