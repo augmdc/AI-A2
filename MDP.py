@@ -137,7 +137,6 @@ def final_policy(n, m, rewards, values, actions):
     symbolic_policy = np.vectorize(directions_map.get)(final_policy)
 
     # Print the final symbolic policy
-    #print(symbolic_policy)
     return symbolic_policy
 
 """
