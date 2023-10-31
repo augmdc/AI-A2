@@ -16,6 +16,7 @@ import sys
 
 # Imports of custom classes
 import MDP
+import QLearning
 
 # Constants for our display
 GRID_SIZE = 10  # Easily change this value
@@ -24,8 +25,8 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-GOAL_REWARD = 112
-WALL_VALUE = np.inf
+GOAL_REWARD = 30
+WALL_VALUE = -1000
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
 WALL_COLOR = (0, 0, 0)
@@ -167,10 +168,11 @@ def main():
     living_reward = -1
     values = np.zeros((n, n))
     noise_prob = 0.2
-    actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+    actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     
-    final_values = MDP.value_iteration(n, n, actions, rewards, values, noise_prob, living_reward)
-    policy = MDP.final_policy(n, n, rewards, final_values, actions)
+    final_values = QLearning.QLearning(rewards, actions, 50)
+    print(final_values)
+    policy = QLearning.Qfinal_policy(n, n, rewards, final_values, actions)
     print(policy)
     #sys.exit()
     
