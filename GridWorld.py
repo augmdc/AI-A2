@@ -17,7 +17,7 @@ import sys
 # Imports of custom classes
 import MDP
 import ReinforcementLearning as RL
-#import QLearning
+import QLearning
 
 # Constants for our display
 GRID_SIZE = 10  # Easily change this value
@@ -26,7 +26,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-GOAL_REWARD = 112
+GOAL_REWARD = 15
 WALL_VALUE = -1000
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
@@ -174,13 +174,13 @@ def main():
     noise_prob = 0.2
     
     # DO NOT CHANGE
-    ACTIONS = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+    ACTIONS = [(0, -1), (-1, 0), (0, 1), (1, 0)] #left up right down
     # DO NOT CHANGE
     
     values = MDP.value_iteration(n, n, ACTIONS, rewards, noise_prob, -1)
-    print(values)
+    #print(values)
     policy = MDP.final_policy(n, n, rewards, values, ACTIONS)
-    print(policy)
+    #print(policy)
     move_counter = 0  # Initialize a counter
     move_delay = 10  # Set the delay in game loops (adjust as needed)
     #sys.exit()
@@ -197,7 +197,7 @@ def main():
     alpha = 0.5
 
     # Number of iterations
-    episodes = 100000
+    episodes = 10000
     
     # Number of steps per episode
     steps_var = 10
@@ -205,10 +205,12 @@ def main():
     # Exploration rate (epsilon) for epsilon-greedy straetegy
     epsilon = 1
     
-    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, -1, steps_var)
-    print(RL.final_policy(n, n, rewards, q_values, ACTIONS))
+    #q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, -1, steps_var)
+    q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
+    print(q_values)
+    print(QLearning.Qfinal_policy(n, n, rewards, q_values, ACTIONS))
+
     sys.exit()
-    
     algorithm = ""
     while algorithm != "0" and algorithm != "1":
         algorithm = input("Input either a 0 or 1. 0 - MDP, 1 - Q-Learning\n")
