@@ -11,90 +11,81 @@ import numpy as np
 WALL_VALUE = np.inf
 GOAL_REWARD = 112
 
-def generate_Q_table(n, m, actions, rewards, gamma, alpha, iterations, epsilon):
-    # Initialize Q-values to zeros (Q-table)
-    q_values = np.zeros((n, m, 4))
+# Moves robot multiple times for an "episode"
+def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var):
+    q_values = np.zeros((10, 10, 4))
     
-    # Perform Q-learning with epsilon-greedy exploration
-    for it in range(iterations):
-        for i in range(n):
-            for j in range(m):
-                for action_index, action in enumerate(actions):
-                    ni, nj = i + action[0], j + action[1]
+    # Every iteration is an episode
+    # Decrease epsilon after every episode
+    min_epsilon = 0.1
+    decay_rate = 0.001
 
-                    # Ensure the agent stays within the grid
-                    ni = max(0, min(n - 1, ni))
-                    nj = max(0, min(m - 1, nj))
+    for episode in range(episodes):
+        steps = 0
+        i, j = world.robot_pos # Capture initial position
+        while steps < step_var: 
+            random_value = np.random.rand()
+            #Exploration
+            if random_value < epsilon: 
+                action_index = np.random.randint(0, len(actions))
+                print("Explore")
+           #Exploitation
+            else:
+                print("Exploit")
+                action_index = np.argmax(q_values[i, j])
+                
+            actual_action = actions[action_index]
+            
+            pi, pj = i, j # Past position
+            i, j = i + actual_action[0],  j + actual_action[1]# Current position
+            print(i, j)
+            
+            # Ensure the agent stays within the grid
+            i = max(0, min(10 - 1, i))
+            j = max(0, min(10 - 1, j))
+                
+            # Q-learning update rule:
+            # 1. Calculate the sample using the reward and the maximum Q-value of the next state
+            sample = rewards[pi , pj] + gamma * np.max(q_values[i, j]) + living_reward
 
-                    # If current state is terminal state, penalties, or rewards, 
-                    # update the Q-values based on their respective rewards
-                    
-                    # TO-DO: identify goal state and each penalty state
-                    
-                    if (i, j) == (0, 1): # Goal State
-                        q_values[i, j, action_index] = 10
-                        continue
-                    elif (i, j) == (0, 2): # Penalty States
-                        q_values[i, j, action_index] = -10
-                        continue
-                    
-                    elif False:         # Reward States
-                        q_values[i, j, action_index] = 10
-                        continue
-
-                    # Explore with probability epsilon or exploit with probability 1 - epsilon
-                    if np.random.rand() < epsilon:
-                        action_index = np.random.randint(0, len(actions))
-                        action = actions[action_index]
-
-                    # Q-learning update rule:
-                    # 1. Calculate the sample using the reward and the maximum Q-value of the next state
-                    sample = rewards[i, j] + gamma * np.max(q_values[ni, nj])
-
-                    # 2. Update Q-value using the Q-learning update rule (weighted average)
-                    q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
-
-                    # Clip the Q-value to a maximum of 10 and a minimum of -10???
-                    if i == 0 and j == 1:
-                        q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
-                    elif i == 0 and j == 2:
-                        q_values[i, j, action_index] = max(q_values[i, j, action_index], -10.0)
+            # 2. Update Q-value using the Q-learning update rule (weighted average)
+            q_values[pi, pj, action_index] = (1 - alpha) * q_values[pi, pj, action_index] + alpha * sample
+            
+            # If hits goal, restart episode
+            if rewards[i, j] == GOAL_REWARD:
+                print("Hit Goal")
+                break
+            
+            # If tried to move into a wall (boundary or actual), restart the episode
+            if pi == i and pj == j:
+                print("Hit Wall/Boundary")
+                break
+            
+            print(f"Episode {episode}, step {steps}")
+            #print(q_values)
+            steps += 1
+          
+        if min_epsilon < epsilon:
+            epsilon -= decay_rate
+            
     return q_values
 
-    def generate_optimal_policy():
-        return 1
+def final_policy(n, m, rewards, q_values, actions):
+    final_policy = np.zeros((n, m), dtype=object)
+    for i in range(n):
+        for j in range(m):
+            # If terminal state
+            if rewards[i, j] == GOAL_REWARD: #rewards[i][j] == 10 or rewards[i][j] == -10
+                final_policy[i][j] = "*"
+                continue
+            
+            # Choose best among q_values for each square (4 per [n, m] pair)
+            best_action_idx = np.argmax(q_values[i, j])
+            final_policy[i][j] = best_action_idx
     
-actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
-
-# Discount factor gamma determines the agent's consideration for future rewards.
-gamma = 1.0
-
-n, m = 4, 3
-
-# Rewards grid setup
-rewards = np.array([
-    [0, 10, -10],
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0]
-])
-
-# Learning rate alpha for Q-learning
-alpha = 0.5
-
-# Number of iterations
-iterations = 10
-
-# Exploration rate (epsilon) for epsilon-greedy straetegy
-epsilon = 0.1
-
-q_values = generate_Q_table(n , m, actions, rewards, gamma, alpha, iterations, epsilon)
-
-# Display final Q-values and corresponding actions for all states and paths
-print(f"Final Q-values after {iterations} iteration(s)")
-for i in range(n):
-    for j in range(m):
-        for action_index, action in enumerate(actions):
-            print(f"State ({i},{j}): {action} Q={q_values[i, j, action_index]:.2f}")
-        print("-----------------")
+    # Convert numeric policy to direction symbols, leaving "*" as is
+    directions_map = {0: "←", 1: "↑", 2: "→", 3: "↓", "*": "*"}
+    symbolic_policy = np.vectorize(directions_map.get)(final_policy)
+    return symbolic_policy
+    
 
