@@ -12,41 +12,91 @@ WALL_VALUE = GridWorld.WALL_VALUE
 GOLD_REWARD = GridWorld.GOLD_REWARD
 TRAP_PENALTY = GridWorld.TRAP_PENALTY
 
-def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_reward = -1):
+
+def Gen_Path(world, values, rewards, actions, epsilon):
+    i, j = world.robot_pos
+    n = rewards[:, 0].size
+    m = rewards[0, :].size
+    path = [(i, j)]
+    while rewards[i, j] != GOAL_REWARD:
+        # For each action, compute the resulting state and its value
+        action_values = []
+        for action_index, action in enumerate(actions):
+            ti, tj = i + action[0], j + action[1]
+            if 0 <= ti < n and 0 <= tj < m and values[ti, tj, action_index] != WALL_VALUE:
+                action_values.append(values[ti, tj, action_index])
+            else:  # boundary case, make the action value small
+                action_values.append(-1000)
+        best_action = max(action_values)
+        best_action_idx = getmaxidx(action_values, best_action)
+        action = actions[best_action_idx]
+
+        # Explore with probability epsilon or exploit with probability 1 - epsilon
+        if np.random.rand() < epsilon:
+            ti = np.inf
+            tj = np.inf
+            while not (0 <= i + ti < n and 0 <= j + tj < m):
+                action_index = np.random.randint(0, len(actions))
+                action = actions[action_index]
+
+        ni, nj = i + action[0], j + action[1]
+        i = ni
+        j = nj
+        path.append((i,j))
+
+    return path
+
+
+
+def QLearning(world, rewards, actions, iterations, alpha = 0.5, epsilon = 0.9, living_reward = -1):
     n = rewards[:, 0].size
     m = rewards[0, :].size
     q_values = np.zeros((n, m, 4))
     # Perform Q-learning with epsilon-greedy exploration
     for it in range(iterations):
-        i, j = initial_pos
+        i, j = world.robot_pos
         while(rewards[i,j] != GOAL_REWARD):
-           ni, nj = i + action[0], j + action[1]
+            # For each action, compute the resulting state and its value
+            action_values = []
+            for action_index, action in enumerate(actions):
+                ti, tj = i + action[0], j + action[1]
+                if 0 <= ti < n and 0 <= tj < m and q_values[ti, tj, action_index] != WALL_VALUE:
+                    action_values.append(q_values[ti, tj, action_index])
+                else:  # boundary case, make the action value small
+                    action_values.append(-1000)
+            best_action = max(action_values)
+            best_action_idx = getmaxidx(action_values, best_action)
+            action = actions[best_action_idx]
 
-           # Ensure the agent stays within the grid
-           ni = max(0, min(n - 1, ni))
-           nj = max(0, min(m - 1, nj))
-
-           # Explore with probability epsilon or exploit with probability 1 - epsilon
-           if np.random.rand() < epsilon:
+            # Explore with probability epsilon or exploit with probability 1 - epsilon
+            if np.random.rand() < epsilon:
                 action_index = np.random.randint(0, len(actions))
                 action = actions[action_index]
 
-                # Q-learning update rule:
-                # 1. Calculate the sample using the reward and the maximum Q-value of the next state
-                sample = rewards[i, j] + gamma * np.max(q_values[ni, nj]) + living_reward
+            ni, nj = i + action[0], j + action[1]
 
-                # 2. Update Q-value using the Q-learning update rule (weighted average)
-                q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
+            # Ensure the agent stays within the grid
+            ni = max(0, min(n - 1, ni))
+            nj = max(0, min(m - 1, nj))
 
-                # Clip the Q-value to a maximum of 10 for (0,1) and a minimum of -10 for (0,2)
-                if rewards[i, j] == GOLD_REWARD:
-                    q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
-                elif rewards[i, j] == TRAP_PENALTY:
-                    q_values[i, j, action_index] = max(q_values[i, j, action_index], -10.0)
-                elif rewards[i, j] == WALL_VALUE:
-                    q_values[i, j, action_index] = WALL_VALUE
-                elif rewards[i, j] == GOAL_REWARD:
-                    q_values[i, j, action_index] = GOAL_REWARD
+            # Q-learning update rule:
+            # 1. Calculate the sample using the reward and the maximum Q-value of the next state
+            sample = rewards[i, j] + gamma * np.max(q_values[ni, nj]) + living_reward
+
+            # 2. Update Q-value using the Q-learning update rule (weighted average)
+            q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
+
+            # Clip the Q-value to a maximum of 10 for (0,1) and a minimum of -10 for (0,2)
+            if rewards[i, j] == GOLD_REWARD:
+                q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
+            elif rewards[i, j] == TRAP_PENALTY:
+                q_values[i, j, action_index] = max(q_values[i, j, action_index], -10.0)
+            elif rewards[i, j] == WALL_VALUE:
+                q_values[i, j, action_index] = WALL_VALUE
+            elif rewards[i, j] == GOAL_REWARD:
+                q_values[i, j, action_index] = GOAL_REWARD
+
+            i, j = ni, nj
 
         epsilon /= 2
     return q_values
@@ -87,3 +137,4 @@ def getmaxidx(arr, val):
     for i in range(0, len(arr), 1):
         if arr[i] == val:
             return i
+
