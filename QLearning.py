@@ -9,6 +9,8 @@ alpha = 0.5
 
 GOAL_REWARD = GridWorld.GOAL_REWARD
 WALL_VALUE = GridWorld.WALL_VALUE
+GOLD_REWARD = GridWorld.GOLD_REWARD
+TRAP_PENALTY = GridWorld.TRAP_PENALTY
 
 def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_reward = -1):
     n = rewards[:, 0].size
@@ -16,44 +18,35 @@ def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_r
     q_values = np.zeros((n, m, 4))
     # Perform Q-learning with epsilon-greedy exploration
     for it in range(iterations):
-        for i in range(n):
-            for j in range(m):
-                for action_index, action in enumerate(actions):
-                    ni, nj = i + action[0], j + action[1]
+        i, j = initial_pos
+        while(rewards[i,j] != GOAL_REWARD):
+           ni, nj = i + action[0], j + action[1]
 
-                    # Ensure the agent stays within the grid
-                    ni = max(0, min(n - 1, ni))
-                    nj = max(0, min(m - 1, nj))
+           # Ensure the agent stays within the grid
+           ni = max(0, min(n - 1, ni))
+           nj = max(0, min(m - 1, nj))
 
-                    # If current state is (0,1) or (0,2), update the Q-values based on their respective rewards
-                    if (i, j) == (0, 1):
-                        q_values[i, j, action_index] = 10
-                        continue
-                    elif (i, j) == (0, 2):
-                        q_values[i, j, action_index] = -10
-                        continue
+           # Explore with probability epsilon or exploit with probability 1 - epsilon
+           if np.random.rand() < epsilon:
+                action_index = np.random.randint(0, len(actions))
+                action = actions[action_index]
 
-                    # Explore with probability epsilon or exploit with probability 1 - epsilon
-                    if np.random.rand() < epsilon:
-                        action_index = np.random.randint(0, len(actions))
-                        action = actions[action_index]
+                # Q-learning update rule:
+                # 1. Calculate the sample using the reward and the maximum Q-value of the next state
+                sample = rewards[i, j] + gamma * np.max(q_values[ni, nj]) + living_reward
 
-                    # Q-learning update rule:
-                    # 1. Calculate the sample using the reward and the maximum Q-value of the next state
-                    sample = rewards[i, j] + gamma * np.max(q_values[ni, nj]) + living_reward
+                # 2. Update Q-value using the Q-learning update rule (weighted average)
+                q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
 
-                    # 2. Update Q-value using the Q-learning update rule (weighted average)
-                    q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
-
-                    # Clip the Q-value to a maximum of 10 for (0,1) and a minimum of -10 for (0,2)
-                    if rewards[i, j] == 10:
-                        q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
-                    elif rewards[i, j] == -10:
-                        q_values[i, j, action_index] = max(q_values[i, j, action_index], -10.0)
-                    elif rewards[i, j] == WALL_VALUE:
-                        q_values[i, j, action_index] = WALL_VALUE
-                    elif rewards[i, j] == GOAL_REWARD:
-                        q_values[i, j, action_index] = GOAL_REWARD
+                # Clip the Q-value to a maximum of 10 for (0,1) and a minimum of -10 for (0,2)
+                if rewards[i, j] == GOLD_REWARD:
+                    q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
+                elif rewards[i, j] == TRAP_PENALTY:
+                    q_values[i, j, action_index] = max(q_values[i, j, action_index], -10.0)
+                elif rewards[i, j] == WALL_VALUE:
+                    q_values[i, j, action_index] = WALL_VALUE
+                elif rewards[i, j] == GOAL_REWARD:
+                    q_values[i, j, action_index] = GOAL_REWARD
 
         epsilon /= 2
     return q_values
