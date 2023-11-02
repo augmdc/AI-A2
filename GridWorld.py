@@ -35,7 +35,7 @@ GOLD_COLOR = (255, 255, 0)  # Yellow
 TRAP_COLOR = (255, 0, 0)   # Red
 
 # Change random seed for different results
-random.seed(64)
+random.seed(65)
 
 class GridWorld:
     def __init__(self, size=GRID_SIZE):
@@ -114,53 +114,59 @@ class GridWorld:
         self.score += reward
         return reward
     
-    # Moves robot multiple times for an "episode"
-    def Q_learning(world, episodes, actions, gamma, epsilon, alpha, living_reward):
-        q_values = np.zeros(10, 10, 4)
-        
-        # Every iteration is an episode
-        # Decrease epsilon after every episode
-        min_epsilon = 0.1
-        decay_rate = 0.01
+# Moves robot multiple times for an "episode"
+def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward):
+    q_values = np.zeros((10, 10, 4))
+    
+    # Every iteration is an episode
+    # Decrease epsilon after every episode
+    min_epsilon = 0.1
+    decay_rate = 0.01
 
-        for i in range(episodes):
-            steps = 0
-            i, j = world.robot_pos
-            while steps < 10:
+    for episode in range(episodes):
+        steps = 0
+        i, j = world.robot_pos # Capture initial position
+        print(i, j)
+        while steps < 10: 
+            #Exploration
+            if np.random.rand() < epsilon: 
+                action_index = np.random.randint(0, len(actions))
+           #Exploitation
+            else:
+                action_index = np.argmax(q_values[i, j])
                 
+            actual_action = actions[action_index]
+            
+            pi, pj = i, j # Past position
+            i, j = world.robot_pos # Current position
+            
+            # Ensure the agent stays within the grid
+            i = max(0, min(10 - 1, i))
+            j = max(0, min(10- 1, j))
                 
-                #Exploration
-                if np.random.rand() < epsilon:
-                    action_index = np.random.randint(0, len(actions))
-                    actual_action = actions[action_index]
-                # Exploitation
-                else:
-                    # Select action to take based on greatest q-value
-                    optimal_action_num = np.argmax(q_values[i, j])
-                    actual_action = actions[optimal_action_num]
-                    
-                directions = ["left", "right", "up", "down"]
-                # Create a dictionary using a loop
-                action_direction_dict = {}
-                for action, direction in zip(actions, directions):
-                    action_direction_dict[action] = direction
-                    
-                direction_to_move_in = action_direction_dict[actual_action]
-                world.move(direction_to_move_in)
-                    
-                pi, pj = i, j # Past position
-                i, j = world.robot_pos # Current position
-                    
-                # Q-learning update rule:
-                # 1. Calculate the sample using the reward and the maximum Q-value of the next state
-                sample = world.grid[pi , pj] + gamma * np.max(q_values[i, j]) + living_reward
+            # Q-learning update rule:
+            # 1. Calculate the sample using the reward and the maximum Q-value of the next state
+            sample = rewards[pi , pj] + gamma * np.max(q_values[i, j]) + living_reward
 
-                # 2. Update Q-value using the Q-learning update rule (weighted average)
-                q_values[pi, pj, action_index] = (1 - alpha) * q_values[pi, pj, action_index] + alpha * sample
-                
-        return q_values
-                
-
+            # 2. Update Q-value using the Q-learning update rule (weighted average)
+            q_values[pi, pj, action_index] = (1 - alpha) * q_values[pi, pj, action_index] + alpha * sample
+            
+            # If hits goal, restart episode
+            if rewards[i, j] == GOAL_REWARD:
+                break
+            
+            # If tried to move into a wall (boundary or actual), restart the episode
+            if pi == i or pj == j:
+                break
+            
+            print(f"Episode {episode}, step {steps}")
+            print(q_values)
+            steps += 1
+            
+        epsilon -= decay_rate
+            
+    return q_values
+     
 def setup_pygame():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -214,7 +220,7 @@ def main():
     
     # Make goal large positive value in order to incentivize movement towards it
     rewards[terminal_state[0], terminal_state[1]] = GOAL_REWARD
-    print(rewards)
+    #print(rewards)
     
     n = world.size
     values = np.zeros((n, n))
@@ -222,11 +228,19 @@ def main():
     actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     
     final_values = QLearning.QLearning(rewards, actions, 50)
-    print(final_values)
+    #print(final_values)
     policy = QLearning.Qfinal_policy(n, n, rewards, final_values, actions)
-    print(policy)
+    #print(policy)
     move_counter = 0  # Initialize a counter
     move_delay = 10  # Set the delay in game loops (adjust as needed)
+    
+    
+    """
+    Q-Learning Variable Values
+    """
+    #Q_learning(world, rewards, 1, actions, 0.9, 0.1, 0.5, -1)
+    
+    #sys.exit()
     
     algorithm = ""
     while algorithm != "0" and algorithm != "1":
@@ -262,46 +276,10 @@ def main():
                     break
 
             move_counter += 1  # Increment the counter
-
+        else:
+            
     pygame.quit()
     sys.exit()
-        
-    """
-    print(f"Current Score: {world.score}")
-    # Check if the robot reached the goal
-    if world.robot_pos == world.goal:
-        print("Robot reached the goal!")
-        print(f"Final Score: {world.score}")
-        running = False
-        break
-    """
-        
-    """
-    # Event handling for human moves
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-        if event.type == pygame.KEYDOWN:
-            # Move robot based on arrow key press
-            if event.key == pygame.K_UP:
-                world.move("up")
-            if event.key == pygame.K_DOWN:
-                world.move("down")
-            if event.key == pygame.K_LEFT:
-                world.move("left")
-            if event.key == pygame.K_RIGHT:
-                world.move("right")
-            # Print the score after the move
-            print(f"Current Score: {world.score}")
-            # Check if the robot reached the goal
-            if world.robot_pos == world.goal:
-                print("Robot reached the goal!")
-                print(f"Final Score: {world.score}")
-                running = False
-                break
-    """
-        
-        
     
 if __name__ == "__main__":
     main()

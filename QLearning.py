@@ -1,5 +1,4 @@
 import numpy as np
-
 import GridWorld
 
 # Discount factor gamma determines the agent's consideration for future rewards.
