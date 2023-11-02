@@ -115,34 +115,36 @@ class GridWorld:
         return reward
     
 # Moves robot multiple times for an "episode"
-def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward):
+def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var):
     q_values = np.zeros((10, 10, 4))
     
     # Every iteration is an episode
     # Decrease epsilon after every episode
-    min_epsilon = 0.1
+    min_epsilon = 0.05
     decay_rate = 0.01
 
     for episode in range(episodes):
         steps = 0
         i, j = world.robot_pos # Capture initial position
-        print(i, j)
-        while steps < 10: 
+        while steps < step_var: 
             #Exploration
             if np.random.rand() < epsilon: 
                 action_index = np.random.randint(0, len(actions))
+                print("Exploration")
            #Exploitation
             else:
+                print("Exploitation")
                 action_index = np.argmax(q_values[i, j])
                 
             actual_action = actions[action_index]
             
             pi, pj = i, j # Past position
-            i, j = world.robot_pos # Current position
+            i, j = i + actual_action[0],  j + actual_action[1]# Current position
+            print(i, j)
             
             # Ensure the agent stays within the grid
             i = max(0, min(10 - 1, i))
-            j = max(0, min(10- 1, j))
+            j = max(0, min(10 - 1, j))
                 
             # Q-learning update rule:
             # 1. Calculate the sample using the reward and the maximum Q-value of the next state
@@ -153,10 +155,12 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
             
             # If hits goal, restart episode
             if rewards[i, j] == GOAL_REWARD:
+                print("Hit Goal")
                 break
             
             # If tried to move into a wall (boundary or actual), restart the episode
-            if pi == i or pj == j:
+            if pi == i and pj == j:
+                print("Hit Wall")
                 break
             
             print(f"Episode {episode}, step {steps}")
@@ -238,9 +242,25 @@ def main():
     """
     Q-Learning Variable Values
     """
-    #Q_learning(world, rewards, 1, actions, 0.9, 0.1, 0.5, -1)
+    actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
+
+    # Discount factor gamma determines the agent's consideration for future rewards.
+    gamma = 1.0
+
+    # Learning rate alpha for Q-learning
+    alpha = 0.5
+
+    # Number of iterations
+    episodes = 1
     
-    #sys.exit()
+    # Number of steps per episode
+    steps_var = 3
+
+    # Exploration rate (epsilon) for epsilon-greedy straetegy
+    epsilon = 0.1
+    
+    Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, -1, steps_var)
+    sys.exit()
     
     algorithm = ""
     while algorithm != "0" and algorithm != "1":
@@ -276,7 +296,10 @@ def main():
                     break
 
             move_counter += 1  # Increment the counter
+        # Q-Learning Section
         else:
+            running = False
+            
             
     pygame.quit()
     sys.exit()
