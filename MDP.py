@@ -101,11 +101,6 @@ def value_iteration(n, m, actions, rewards, noise_prob, living_reward):
         difference = compute_difference(old_values, values)
         
         it += 1
-        # Display the value function for this iteration.
-        print(f"Iteration {it + 1}")
-        for row in values:
-            print(" ".join(f"{x:7.2f}" for x in row))
-        print("-----------------------------")
     return values
         
 def final_policy(n, m, rewards, values, actions):

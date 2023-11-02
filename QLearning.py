@@ -57,17 +57,19 @@ def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_r
         for i in range(n):
             for j in range(m):
                 for action_index, action in enumerate(actions):
-                    ni, nj = i + action[0], j + action[1]
-
-                    if not (0 <= ni < n and 0 <= nj < n):
-                        q_values[i, j, action_index] = WALL_VALUE
-                        continue
-
+                    randaction = None
                     # Explore with probability epsilon or exploit with probability 1 - epsilon
                     if np.random.rand() < epsilon:
                         action_index = np.random.randint(0, len(actions))
-                        action = actions[action_index]
-
+                        randaction = actions[action_index]
+                    if randaction is not None:
+                        ni, nj = i + randaction[0], j + randaction[1]
+                    else:
+                        ni, nj = i + action[0], j + action[1]
+                    # if the action takes us out of bounds, just assign the q value in that direction to the wall value
+                    if not (0 <= ni < n and 0 <= nj < n):
+                        q_values[i, j, action_index] = WALL_VALUE
+                        continue
                     # Q-learning update rule:
                     # 1. Calculate the sample using the reward and the maximum Q-value of the next state
                     sample = rewards[i, j] + gamma * np.max(q_values[ni, nj]) + living_reward
@@ -75,7 +77,7 @@ def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_r
                     # 2. Update Q-value using the Q-learning update rule (weighted average)
                     q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
 
-                    # Clip the Q-value to a maximum of 10 for (0,1) and a minimum of -10 for (0,2)
+                    # Clip the Q-value if it has reached GOLD, TRAP, GOAL or WALL
                     if rewards[i, j] == GOLD_REWARD:
                         q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
                     elif rewards[i, j] == TRAP_PENALTY:
@@ -85,7 +87,7 @@ def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_r
                     elif rewards[i, j] == GOAL_REWARD:
                         q_values[i, j, action_index] = min(q_values[i, j, action_index], GOAL_REWARD)
 
-        epsilon /= 1.1
+        epsilon /= 1.1 #decrease epsilon each time
     return q_values
 
 def Qfinal_policy(n, m, rewards, values, actions):
@@ -110,8 +112,6 @@ def Qfinal_policy(n, m, rewards, values, actions):
             best_action = max(action_values)
             best_action_idx = getmaxidx(action_values, best_action)
             final_policy[i][j] = best_action_idx
-            if i == 8 and j == 6:
-                print(action_values, best_action, best_action_idx, values[i, j])
 
     # Convert numeric policy to direction symbols, leaving "*" as is(0, -1), (-1, 0), (0, 1), (1, 0)
     directions_map = {0: "←", 1: "↑", 2: "→", 3: "↓", "*": "*"}
@@ -121,7 +121,7 @@ def Qfinal_policy(n, m, rewards, values, actions):
     # print(symbolic_policy)
     return symbolic_policy
 
-
+#gets the idx of the max value of the array
 def getmaxidx(arr, val):
     for i in range(0, len(arr), 1):
         if arr[i] == val:

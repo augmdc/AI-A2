@@ -16,7 +16,6 @@ import sys
 
 # Imports of custom classes
 import MDP
-import ReinforcementLearning as RL
 import QLearning
 
 # Constants for our display
@@ -26,7 +25,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-GOAL_REWARD = 12
+GOAL_REWARD = 6 #6 seems to work best for the QLearning
 WALL_VALUE = -1000
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
@@ -38,6 +37,7 @@ TRAP_COLOR = (255, 0, 0)   # Red
 # Change random seed for different results
 random.seed(64)
 
+#Gridworld object
 class GridWorld:
     def __init__(self, size=GRID_SIZE):
         self.size = size
@@ -98,11 +98,12 @@ class GridWorld:
         """
         x, y = self.robot_pos
         n = rewards[:, 0].size
+        #uses the different policy generation functions based on which algorithm was used
         if isMDP:
             final_policy_grid = MDP.final_policy(n, n, rewards, values, actions)
         else:
             final_policy_grid = QLearning.Qfinal_policy(n, n, rewards, values, actions)
-            print(final_policy_grid)
+
         current_position_direction = final_policy_grid[x, y]
         directions_map = {"←": "left", "↑": "up", "→": "right", "↓": "down"}
         direction = directions_map.get(current_position_direction)
@@ -117,6 +118,8 @@ class GridWorld:
             y += 1
 
         reward = self.grid[x][y] - 1  # step penalty
+        #if we step on a gold space, we need to re-run the algorithm, since the rewards
+        #have changed
         if reward == GOLD_REWARD - 1:
             rewards[x, y] = 0
             if isMDP:
@@ -181,7 +184,6 @@ def main():
     
     # Make goal large positive value in order to incentivize movement towards it
     rewards[terminal_state[0], terminal_state[1]] = GOAL_REWARD
-    #print(rewards)
     
     n = world.size
     noise_prob = 0.2
@@ -189,14 +191,12 @@ def main():
     # DO NOT CHANGE
     ACTIONS = [(0, -1), (-1, 0), (0, 1), (1, 0)] #left up right down
     # DO NOT CHANGE
-    
+
+    #generate values for value iterations
     values = MDP.value_iteration(n, n, ACTIONS, rewards, noise_prob, -1)
-    #print(values)
-    policy = MDP.final_policy(n, n, rewards, values, ACTIONS)
-    #print(policy)
+
     move_counter = 0  # Initialize a counter
     move_delay = 10  # Set the delay in game loops (adjust as needed)
-    #sys.exit()
     
     
     """
@@ -217,18 +217,14 @@ def main():
 
     # Exploration rate (epsilon) for epsilon-greedy straetegy
     epsilon = 1
-    
-    #q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, -1, steps_var)
-    q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
-    print(q_values)
-    print(q_values[8, 6])
-    print(QLearning.Qfinal_policy(n, n, rewards, q_values, ACTIONS))
 
-    #sys.exit()
+    #calculate the q values for the algorithm
+    q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
+
+    #get input from the user to determine which algorithm to run
     algorithm = ""
     while algorithm != "0" and algorithm != "1":
         algorithm = input("Input either a 0 or 1. 0 - MDP, 1 - Q-Learning\n")
-        print(algorithm)
     
     algorithm = int(algorithm)
 

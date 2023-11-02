@@ -13,7 +13,9 @@ GOAL_REWARD = 112
 
 # Moves robot multiple times for an "episode"
 def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var):
-    q_values = np.zeros((10, 10, 4))
+    n = 10
+    m = 10
+    q_values = np.zeros((n, m, 4))
     
     # Every iteration is an episode
     # Decrease epsilon after every episode
