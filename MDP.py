@@ -43,7 +43,7 @@ def compute_difference(arr1, arr2):
 
 # Equivalent of V*(s)
 # Returns a grid with each cell representing values
-def value_iteration(n, m, actions, rewards, values, noise_prob, living_reward):
+def value_iteration(n, m, actions, rewards, noise_prob, living_reward):
     values = np.zeros((n, m))
     
     # NEXT SECTION CAN BE DELETED IN FUTURE
@@ -138,43 +138,5 @@ def final_policy(n, m, rewards, values, actions):
 
     # Print the final symbolic policy
     return symbolic_policy
-
-"""
-# Grid size
-n, m = 4, 3
-
-# Rewards grid setup
-# This grid provides immediate rewards for each cell. The agent receives +10 for reaching one cell, -10 for another, and 0 elsewhere.
-rewards = np.array([
-    [0, 10, -10],
-    [0, 0, 0],
-    [0, 0, 0],
-    [0, 0, 0]
-])
-
-# Living reward (or penalty) is a cost for each move the agent makes.
-# This encourages the agent to find a goal state as quickly as possible.
-living_reward = -1
-
-# Initialize the value function to zeros. This matrix holds the expected cumulative rewards
-# for each state under the current policy.
-values = np.zeros((n, m))
-
-# Discount factor gamma determines the agent's consideration for future rewards.
-# A value close to 1 makes the agent consider future rewards as important as immediate ones.
-gamma = 0.9
-
-# Noise probability: With a certain probability, the agent doesn't move in the intended direction.
-# Instead, it may move in some other random direction.
-noise_prob = 0.2
-
-# Possible actions that the agent can take: move left, up, right, or down.
-actions = [(0, -1), (-1, 0), (0, 1), (1, 0)]
-
-iterations = 100
-
-final_values = value_iteration(4, 3, actions, rewards, values, noise_prob, living_reward)
-print(final_policy(n, m, rewards, final_values))
-"""
 
 

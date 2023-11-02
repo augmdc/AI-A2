@@ -16,7 +16,8 @@ import sys
 
 # Imports of custom classes
 import MDP
-import QLearning
+import ReinforcementLearning as RL
+#import QLearning
 
 # Constants for our display
 GRID_SIZE = 10  # Easily change this value
@@ -25,7 +26,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-GOAL_REWARD = 30
+GOAL_REWARD = 112
 WALL_VALUE = -1000
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
@@ -35,7 +36,7 @@ GOLD_COLOR = (255, 255, 0)  # Yellow
 TRAP_COLOR = (255, 0, 0)   # Red
 
 # Change random seed for different results
-random.seed(65)
+random.seed(100)
 
 class GridWorld:
     def __init__(self, size=GRID_SIZE):
@@ -114,63 +115,6 @@ class GridWorld:
         self.score += reward
         return reward
     
-# Moves robot multiple times for an "episode"
-def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var):
-    q_values = np.zeros((10, 10, 4))
-    
-    # Every iteration is an episode
-    # Decrease epsilon after every episode
-    min_epsilon = 0.05
-    decay_rate = 0.01
-
-    for episode in range(episodes):
-        steps = 0
-        i, j = world.robot_pos # Capture initial position
-        while steps < step_var: 
-            #Exploration
-            if np.random.rand() < epsilon: 
-                action_index = np.random.randint(0, len(actions))
-                print("Exploration")
-           #Exploitation
-            else:
-                print("Exploitation")
-                action_index = np.argmax(q_values[i, j])
-                
-            actual_action = actions[action_index]
-            
-            pi, pj = i, j # Past position
-            i, j = i + actual_action[0],  j + actual_action[1]# Current position
-            print(i, j)
-            
-            # Ensure the agent stays within the grid
-            i = max(0, min(10 - 1, i))
-            j = max(0, min(10 - 1, j))
-                
-            # Q-learning update rule:
-            # 1. Calculate the sample using the reward and the maximum Q-value of the next state
-            sample = rewards[pi , pj] + gamma * np.max(q_values[i, j]) + living_reward
-
-            # 2. Update Q-value using the Q-learning update rule (weighted average)
-            q_values[pi, pj, action_index] = (1 - alpha) * q_values[pi, pj, action_index] + alpha * sample
-            
-            # If hits goal, restart episode
-            if rewards[i, j] == GOAL_REWARD:
-                print("Hit Goal")
-                break
-            
-            # If tried to move into a wall (boundary or actual), restart the episode
-            if pi == i and pj == j:
-                print("Hit Wall")
-                break
-            
-            print(f"Episode {episode}, step {steps}")
-            print(q_values)
-            steps += 1
-            
-        epsilon -= decay_rate
-            
-    return q_values
-     
 def setup_pygame():
     pygame.init()
     screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -227,39 +171,42 @@ def main():
     #print(rewards)
     
     n = world.size
-    values = np.zeros((n, n))
     noise_prob = 0.2
-    actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
     
-    final_values = QLearning.QLearning(rewards, actions, 50)
-    #print(final_values)
-    policy = QLearning.Qfinal_policy(n, n, rewards, final_values, actions)
-    #print(policy)
+    # DO NOT CHANGE
+    ACTIONS = [(0, -1), (-1, 0), (0, 1), (1, 0)]
+    # DO NOT CHANGE
+    
+    values = MDP.value_iteration(n, n, ACTIONS, rewards, noise_prob, -1)
+    print(values)
+    policy = MDP.final_policy(n, n, rewards, values, ACTIONS)
+    print(policy)
     move_counter = 0  # Initialize a counter
     move_delay = 10  # Set the delay in game loops (adjust as needed)
+    #sys.exit()
     
     
     """
     Q-Learning Variable Values
     """
-    actions = [(-1, 0), (1, 0), (0, -1), (0, 1)]
 
     # Discount factor gamma determines the agent's consideration for future rewards.
-    gamma = 1.0
+    gamma = 0.4
 
     # Learning rate alpha for Q-learning
     alpha = 0.5
 
     # Number of iterations
-    episodes = 1
+    episodes = 100000
     
     # Number of steps per episode
-    steps_var = 3
+    steps_var = 10
 
     # Exploration rate (epsilon) for epsilon-greedy straetegy
-    epsilon = 0.1
+    epsilon = 1
     
-    Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, -1, steps_var)
+    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, -1, steps_var)
+    print(RL.final_policy(n, n, rewards, q_values, ACTIONS))
     sys.exit()
     
     algorithm = ""
