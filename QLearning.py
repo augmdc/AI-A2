@@ -83,7 +83,7 @@ def QLearning(rewards, actions, iterations, alpha = 0.5, epsilon = 0.1, living_r
                     elif rewards[i, j] == WALL_VALUE:
                         q_values[i, j, action_index] = WALL_VALUE
                     elif rewards[i, j] == GOAL_REWARD:
-                        q_values[i, j, action_index] = GOAL_REWARD
+                        q_values[i, j, action_index] = min(q_values[i, j, action_index], GOAL_REWARD)
 
         epsilon /= 1.1
     return q_values
@@ -104,12 +104,14 @@ def Qfinal_policy(n, m, rewards, values, actions):
             for action_index, action in enumerate(actions):
                 ni, nj = i + action[0], j + action[1]
                 if 0 <= ni < n and 0 <= nj < m and values[ni, nj, action_index] != np.inf:
-                    action_values.append(values[ni, nj, action_index])
+                    action_values.append(values[i, j, action_index])
                 else:  # boundary case, make the action value small
                     action_values.append(-1000)
             best_action = max(action_values)
             best_action_idx = getmaxidx(action_values, best_action)
             final_policy[i][j] = best_action_idx
+            if i == 8 and j == 6:
+                print(action_values, best_action, best_action_idx, values[i, j])
 
     # Convert numeric policy to direction symbols, leaving "*" as is(0, -1), (-1, 0), (0, 1), (1, 0)
     directions_map = {0: "←", 1: "↑", 2: "→", 3: "↓", "*": "*"}

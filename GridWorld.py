@@ -26,7 +26,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-GOAL_REWARD = 30
+GOAL_REWARD = 12
 WALL_VALUE = -1000
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
@@ -221,6 +221,7 @@ def main():
     #q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, -1, steps_var)
     q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
     print(q_values)
+    print(q_values[8, 6])
     print(QLearning.Qfinal_policy(n, n, rewards, q_values, ACTIONS))
 
     #sys.exit()
