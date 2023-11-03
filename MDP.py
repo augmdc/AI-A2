@@ -7,9 +7,9 @@ Created on Tue Oct 24 15:36:20 2023
 """
 
 import numpy as np
-
-WALL_VALUE = np.inf
-GOAL_REWARD = 112
+import Constants
+WALL_VALUE = Constants.WALL_VALUE
+GOAL_REWARD = Constants.GOAL_REWARD
 
 # Equivalent of T(s, a, s')
 # Computes the probability of moving from state s to state s' when performing an action
@@ -110,7 +110,7 @@ def final_policy(n, m, rewards, values, actions):
     for i in range(n):
         for j in range(m):
             # If terminal state
-            if rewards[i][j] == GOAL_REWARD: #rewards[i][j] == 10 or rewards[i][j] == -10
+            if rewards[i][j] == GOAL_REWARD: #if we're at the GOAL_REWARD
                 final_policy[i][j] = "*"
                 continue
 
@@ -118,11 +118,12 @@ def final_policy(n, m, rewards, values, actions):
             action_values = []
             for action in actions:
                 ni, nj = i + action[0], j + action[1]
-                if 0 <= ni < n and 0 <= nj < m and values[ni, nj] != np.inf:
+                if 0 <= ni < n and 0 <= nj < m and rewards[ni, nj] != WALL_VALUE and values[ni][nj] != WALL_VALUE:
                     action_values.append(values[ni][nj])
-                else:  # boundary case, stay in the same state
-                    action_values.append(values[i][j])
-
+                else:
+                    action_values.append(WALL_VALUE)
+            if i == 9 and j == 1:
+                print(action_values)
             # Choose the action that leads to the highest state value
             best_action_idx = np.argmax(action_values)
             final_policy[i][j] = best_action_idx
@@ -130,7 +131,8 @@ def final_policy(n, m, rewards, values, actions):
     # Convert numeric policy to direction symbols, leaving "*" as is
     directions_map = {0: "←", 1: "↑", 2: "→", 3: "↓", "*": "*"}
     symbolic_policy = np.vectorize(directions_map.get)(final_policy)
-
+    print(symbolic_policy[1, 5])
+    print(symbolic_policy)
     # Print the final symbolic policy
     return symbolic_policy
 
