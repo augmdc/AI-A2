@@ -9,62 +9,58 @@ Created on Sat Oct 28 16:46:50 2023
 import numpy as np
 
 WALL_VALUE = np.inf
-GOAL_REWARD = 112
+GOAL_REWARD = 6
 
 # Moves robot multiple times for an "episode"
-def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var):
-    n = 10
-    m = 10
-    q_values = np.zeros((n, m, 4))
+def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var, decay_rate):
+    q_values = np.zeros((10, 10, 4))
+    print(rewards)
+
     
     # Every iteration is an episode
     # Decrease epsilon after every episode
     min_epsilon = 0.1
-    decay_rate = 0.001
 
     for episode in range(episodes):
         steps = 0
         i, j = world.robot_pos # Capture initial position
-        while steps < step_var: 
+        actions = set()
+        while steps < step_var:
             random_value = np.random.rand()
             #Exploration
             if random_value < epsilon: 
                 action_index = np.random.randint(0, len(actions))
-                print("Explore")
            #Exploitation
             else:
-                print("Exploit")
                 action_index = np.argmax(q_values[i, j])
                 
             actual_action = actions[action_index]
             
-            pi, pj = i, j # Past position
-            i, j = i + actual_action[0],  j + actual_action[1]# Current position
-            print(i, j)
+            new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
+            #print(new_i, new_j)
             
             # Ensure the agent stays within the grid
-            i = max(0, min(10 - 1, i))
-            j = max(0, min(10 - 1, j))
+            new_i = max(0, min(10 - 1, new_i))
+            new_j = max(0, min(10 - 1, new_j))
+            
+            # If tries to move into a wall, do not update Q-values
+            if rewards[new_i, new_j] != WALL_VALUE:
                 
-            # Q-learning update rule:
-            # 1. Calculate the sample using the reward and the maximum Q-value of the next state
-            sample = rewards[pi , pj] + gamma * np.max(q_values[i, j]) + living_reward
+                # Takes into account goal, penalty and reward states
+                # 1. Calculate the sample using the reward and the maximum Q-value of the next state
+                sample = rewards[i , j] + gamma * np.max(q_values[new_i, new_j]) + living_reward
 
-            # 2. Update Q-value using the Q-learning update rule (weighted average)
-            q_values[pi, pj, action_index] = (1 - alpha) * q_values[pi, pj, action_index] + alpha * sample
+                # 2. Update Q-value using the Q-learning update rule (weighted average)
+                q_values[i, j, action_index] = (1 - alpha) * q_values[i, j, action_index] + alpha * sample
+                
+                # Update current position
+                i, j = new_i, new_j
+                
+                # If hits goal, restart episode
+                if rewards[new_i, new_j] == GOAL_REWARD:
+                    break
             
-            # If hits goal, restart episode
-            if rewards[i, j] == GOAL_REWARD:
-                print("Hit Goal")
-                break
-            
-            # If tried to move into a wall (boundary or actual), restart the episode
-            if pi == i and pj == j:
-                print("Hit Wall/Boundary")
-                break
-            
-            print(f"Episode {episode}, step {steps}")
-            #print(q_values)
+            #print(f"Episode {episode}, step {steps}")
             steps += 1
           
         if min_epsilon < epsilon:
