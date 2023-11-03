@@ -9,8 +9,10 @@ Created on Sat Oct 28 16:46:50 2023
 import numpy as np
 import sys, time
 
-WALL_VALUE = -1000
-GOAL_REWARD = 112
+import Constants
+
+WALL_VALUE = Constants.WALL_VALUE
+GOAL_REWARD = Constants.GOAL_REWARD
 
 # Moves robot multiple times for an "episode"
 def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var, decay_rate):
