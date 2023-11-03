@@ -44,17 +44,7 @@ def compute_difference(arr1, arr2):
 # Equivalent of V*(s)
 # Returns a grid with each cell representing values
 def value_iteration(n, m, actions, rewards, noise_prob, living_reward):
-    values = np.zeros((n, m))
-    
-    # NEXT SECTION CAN BE DELETED IN FUTURE
-    # Experiment: put in rewards and penalties into values array
-    """
-    for i in range(n):
-        for j in range(m):
-            if rewards[i, j] == -10 or rewards[i, j] == 10:
-                values[i, j] = rewards[i, j]
-    """
-    # Experiment: put in rewards and penalties into values array        
+    values = np.zeros((n, m))      
     
     # While the change between iterations is less than 0.0001, run the value iteration process
     difference= np.inf
