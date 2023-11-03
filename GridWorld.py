@@ -17,6 +17,7 @@ import sys
 # Imports of custom classes
 import MDP
 import QLearning
+import ReinforcementLearning as RL
 
 # Constants for our display
 GRID_SIZE = 10  # Easily change this value
@@ -25,7 +26,7 @@ SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
 GOLD_REWARD = 10 
 TRAP_PENALTY = -10 
-GOAL_REWARD = 6 #6 seems to work best for the QLearning
+GOAL_REWARD = 112       # 6 seems to work best for the QLearning
 WALL_VALUE = -1000
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
@@ -210,17 +211,23 @@ def main():
     alpha = 0.5
 
     # Number of iterations
-    episodes = 10000
+    episodes = 1000
     
     # Number of steps per episode
     steps_var = 10
+    
+    living_reward = -1
 
     # Exploration rate (epsilon) for epsilon-greedy straetegy
     epsilon = 1
+    decay_rate = 0.001
 
     #calculate the q values for the algorithm
-    q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
-
+    #q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
+    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate)
+    print(q_values)
+    sys.exit()
+    
     #get input from the user to determine which algorithm to run
     algorithm = ""
     while algorithm != "0" and algorithm != "1":

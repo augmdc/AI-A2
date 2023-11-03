@@ -7,16 +7,16 @@ Created on Sat Oct 28 16:46:50 2023
 """
 
 import numpy as np
+import sys, time
 
-WALL_VALUE = np.inf
-GOAL_REWARD = 6
+WALL_VALUE = -1000
+GOAL_REWARD = 112
 
 # Moves robot multiple times for an "episode"
 def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var, decay_rate):
     q_values = np.zeros((10, 10, 4))
     print(rewards)
 
-    
     # Every iteration is an episode
     # Decrease epsilon after every episode
     min_epsilon = 0.1
@@ -24,20 +24,45 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
     for episode in range(episodes):
         steps = 0
         i, j = world.robot_pos # Capture initial position
-        actions = set()
+
+        coords_seen = set()
         while steps < step_var:
-            random_value = np.random.rand()
-            #Exploration
-            if random_value < epsilon: 
-                action_index = np.random.randint(0, len(actions))
-           #Exploitation
-            else:
-                action_index = np.argmax(q_values[i, j])
+            while True:
+                random_value = np.random.rand()
+                #Exploration
+                if random_value < epsilon: 
+                    action_index = np.random.randint(0, len(actions))
+               #Exploitation
+                else:
+                    action_index = np.argmax(q_values[i, j])
+                    
+                actual_action = actions[action_index]
                 
-            actual_action = actions[action_index]
-            
-            new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
-            #print(new_i, new_j)
+                new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
+                
+            """
+            coords_seen.add((i, j))
+            while True:
+                random_value = np.random.rand()
+                #Exploration
+                if random_value < epsilon: 
+                    action_index = np.random.randint(0, len(actions))
+               #Exploitation
+                else:
+                    action_index = np.argmax(q_values[i, j])
+                    
+                actual_action = actions[action_index]
+                
+                new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
+                
+                if (new_i, new_j) not in coords_seen:
+                    print("Break")
+                    break
+                
+                print(i, j)
+                print(new_i, new_j)
+                
+            """
             
             # Ensure the agent stays within the grid
             new_i = max(0, min(10 - 1, new_i))
@@ -59,8 +84,13 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
                 # If hits goal, restart episode
                 if rewards[new_i, new_j] == GOAL_REWARD:
                     break
-            
-            #print(f"Episode {episode}, step {steps}")
+            # EXPERIMENT: make q_value large negative value to make sure that agent does not hit the wall
+            """
+            else:
+                q_values[new_i,new_j, action_index] = WALL_VALUE
+            """
+                
+            print(f"Episode {episode}, step {steps}")
             steps += 1
           
         if min_epsilon < epsilon:
