@@ -15,6 +15,7 @@ import time
 import sys
 
 # Imports of custom classes
+import Constants
 import MDP
 import QLearning
 import ReinforcementLearning as RL
@@ -24,10 +25,10 @@ GRID_SIZE = 10  # Easily change this value
 CELL_SIZE = 60  # Adjust this based on your display preferences
 SCREEN_WIDTH = GRID_SIZE * CELL_SIZE
 SCREEN_HEIGHT = GRID_SIZE * CELL_SIZE
-GOLD_REWARD = 10 
-TRAP_PENALTY = -10 
-GOAL_REWARD = 112       # 6 seems to work best for the QLearning
-WALL_VALUE = -1000
+GOLD_REWARD = Constants.GOLD_REWARD
+TRAP_PENALTY = Constants.TRAP_PENALTY
+GOAL_REWARD = Constants.GOAL_REWARD #6 seems to work best for the QLearning
+WALL_VALUE = Constants.WALL_VALUE
 ROBOT_COLOR = (0, 128, 255)
 GOAL_COLOR = (0, 255, 0)
 WALL_COLOR = (0, 0, 0)
@@ -36,7 +37,7 @@ GOLD_COLOR = (255, 255, 0)  # Yellow
 TRAP_COLOR = (255, 0, 0)   # Red
 
 # Change random seed for different results
-random.seed(64)
+random.seed(40)
 
 #Gridworld object
 class GridWorld:

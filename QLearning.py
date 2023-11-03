@@ -1,5 +1,5 @@
 import numpy as np
-import GridWorld
+import Constants
 
 # Discount factor gamma determines the agent's consideration for future rewards.
 gamma = 0.9
@@ -7,10 +7,10 @@ gamma = 0.9
 # Learning rate alpha for Q-learning
 alpha = 0.5
 
-GOAL_REWARD = GridWorld.GOAL_REWARD
-WALL_VALUE = GridWorld.WALL_VALUE
-GOLD_REWARD = GridWorld.GOLD_REWARD
-TRAP_PENALTY = GridWorld.TRAP_PENALTY
+GOAL_REWARD = Constants.GOAL_REWARD
+WALL_VALUE = Constants.WALL_VALUE
+GOLD_REWARD = Constants.GOLD_REWARD
+TRAP_PENALTY = Constants.TRAP_PENALTY
 
 
 def Gen_Path(world, values, rewards, actions, epsilon):
