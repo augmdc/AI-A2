@@ -27,19 +27,23 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
 
         coords_seen = set()
         while steps < step_var:
-            while True:
-                random_value = np.random.rand()
-                #Exploration
-                if random_value < epsilon: 
-                    action_index = np.random.randint(0, len(actions))
-               #Exploitation
-                else:
-                    action_index = np.argmax(q_values[i, j])
-                    
-                actual_action = actions[action_index]
+            random_value = np.random.rand()
+            #Exploration
+            if random_value < epsilon: 
+                action_index = np.random.randint(0, len(actions))
+           #Exploitation
+            else:
+                action_index = np.argmax(q_values[i, j])
                 
-                new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
+            actual_action = actions[action_index]
+            
+            new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
                 
+            # While the new coordinates are in coords_seen, go to next action possible
+            
+            #possible_actions = actions.pop()
+                
+            
             """
             coords_seen.add((i, j))
             while True:
