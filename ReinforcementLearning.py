@@ -8,29 +8,42 @@ Created on Sat Oct 28 16:46:50 2023
 
 import numpy as np
 
-WALL_VALUE = np.inf
+WALL_VALUE = -np.inf  # Negative infinity
 GOAL_REWARD = 6
 
 # Moves robot multiple times for an "episode"
-def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var, decay_rate):
+def Q_learning(world, rewards, episodes, gamma, min_epsilon, max_epsilon, alpha, living_reward, step_var):
     q_values = np.zeros((10, 10, 4))
     print(rewards)
-
     
-    # Every iteration is an episode
-    # Decrease epsilon after every episode
-    min_epsilon = 0.1
+    # Initialize vars related to epsilon scaling
+    # Epsilon is scaled down proportionally to percent_cells_explored
+    # This ensures that exploration and exploitation are balanced based on current world knowledge
+    epsilon = max_epsilon  # Start by favouring exploration over exploitation
+    epsilon_range = max_epsilon - min_epsilon
+    num_cells_explored = 0  # Count of novel cells visited
+    percent_cells_explored = 0
+    unvisited_cells = []  # Track coodinates of all cells that are not walls, and have not been explored in any episode
+    
+    # Populate unvisited_cells list
+    for i in range(world.size):
+        for j in range(world.size):
+            if rewards[i][j] != WALL_VALUE:
+                unvisited_cells.append([i,j])
+    print(unvisited_cells)
+    total_cells = len(unvisited_cells)  # Number of cells in world that are not walls
 
+    # Every iteration is an episode
     for episode in range(episodes):
         steps = 0
         i, j = world.robot_pos # Capture initial position
         actions = set()
         while steps < step_var:
-            random_value = np.random.rand()
-            #Exploration
+            random_value = np.random.rand()  # Generates a float where 0 < random_value < 1
+            # Exploration
             if random_value < epsilon: 
                 action_index = np.random.randint(0, len(actions))
-           #Exploitation
+           # Exploitation
             else:
                 action_index = np.argmax(q_values[i, j])
                 
@@ -55,6 +68,10 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
                 
                 # Update current position
                 i, j = new_i, new_j
+                print('pos = ' + str(i) + ',' + str(j))
+                # Remove current cell from unvisited_cells list
+                if [i,j] in unvisited_cells:
+                    unvisited_cells.remove([i,j])
                 
                 # If hits goal, restart episode
                 if rewards[new_i, new_j] == GOAL_REWARD:
@@ -62,9 +79,13 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
             
             #print(f"Episode {episode}, step {steps}")
             steps += 1
-          
-        if min_epsilon < epsilon:
-            epsilon -= decay_rate
+         
+        # Update vars related to epsilon scaling
+        num_cells_explored = total_cells - len(unvisited_cells)
+        percent_cells_explored = num_cells_explored / total_cells
+        
+        # Scale epsilon down proportionally to percent_cells_explored
+        epsilon = max_epsilon - (epsilon_range * percent_cells_explored)
             
     return q_values
 
@@ -73,7 +94,7 @@ def final_policy(n, m, rewards, q_values, actions):
     for i in range(n):
         for j in range(m):
             # If terminal state
-            if rewards[i, j] == GOAL_REWARD: #rewards[i][j] == 10 or rewards[i][j] == -10
+            if rewards[i, j] == GOAL_REWARD: # rewards[i][j] == 10 or rewards[i][j] == -10
                 final_policy[i][j] = "*"
                 continue
             
