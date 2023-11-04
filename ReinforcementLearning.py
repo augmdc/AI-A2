@@ -1,9 +1,15 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Sat Oct 28 16:46:50 2023
-
-@author: augmdc
+Changelog (04/11/23 3:15pm):
+- Epsilon is now scaled down proportionally to percentCellsExplored in ReinforcementLearning.py
+- Vars for epsilon now initialized in ReinforcementLearning.py
+- "decay_rate" removed from ReinforcementLearning.py; to be replaced with epsilon scaling subroutine
+- Removed calls and imports for QLearning.py in GridWorld.py, replaced with ReinforcementLearning.py
+- "steps_var" renamed to "step_var" in GridWorld.py for consistency with naming in ReinforcementLearning.py
+- Initialized "living_reward" in GridWorld.py as -1, since ReinforcementLearning.py expects it as a param
+- Minor comment modifications, to align with python coding standards; few spelling corrections
+- Changed WALL_VALUE to -np.inf in ReinforcementLearning.py and GridWorld.py, from np.inf and -1000 respectively
 """
 
 import numpy as np
