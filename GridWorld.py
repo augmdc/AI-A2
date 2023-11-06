@@ -37,13 +37,13 @@ GOLD_COLOR = (255, 255, 0)  # Yellow
 TRAP_COLOR = (255, 0, 0)   # Red
 
 # Discount factor gamma determines the agent's consideration for future rewards.
-gamma = 0.4
+gamma = 0.9
 
 # Learning rate alpha for Q-learning
 alpha = 0.5
 
 # Number of iterations
-episodes = 1000
+episodes = 10000
 
 # Number of steps per episode
 steps_var = 10
@@ -51,11 +51,11 @@ steps_var = 10
 living_reward = -1
 
 # Exploration rate (epsilon) for epsilon-greedy straetegy
-epsilon = 1
+epsilon = 3
 decay_rate = 0.001
 
 # Change random seed for different results
-random.seed(40)
+random.seed(100)
 
 #Gridworld object
 class GridWorld:
@@ -225,7 +225,10 @@ def main():
 
     #calculate the q values for the algorithm
     #q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
-    #q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate)
+    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate)
+    q_policy = RL.final_policy(10, 10, rewards, q_values, ACTIONS)
+    print(q_policy)
+    sys.exit()
     
     #get input from the user to determine which algorithm to run
     algorithm = ""
