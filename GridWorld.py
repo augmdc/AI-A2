@@ -41,18 +41,19 @@ gamma = 0.9
 
 # Learning rate alpha for Q-learning
 alpha = 0.5
+decay_rate_alpha = 0.01
 
 # Number of iterations
 episodes = 10000
 
 # Number of steps per episode
-steps_var = 10
+steps_var = 15
 
 living_reward = -1
 
 # Exploration rate (epsilon) for epsilon-greedy straetegy
-epsilon = 3
-decay_rate = 0.001
+epsilon = 1
+decay_rate_epsilon = 0.001
 
 # Change random seed for different results
 random.seed(100)
@@ -122,7 +123,8 @@ class GridWorld:
         if isMDP:
             final_policy_grid = MDP.final_policy(n, n, rewards, values, actions)
         else:
-            final_policy_grid = RL.Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, steps_var, decay_rate)
+            final_policy_grid = RL.Q_learning(world, rewards, episodes, actions, gamma,
+                                              epsilon, alpha, living_reward, steps_var, decay_rate_epsilon, decay_rate_alpha)
 
         current_position_direction = final_policy_grid[x, y]
         directions_map = {"←": "left", "↑": "up", "→": "right", "↓": "down"}
@@ -223,9 +225,11 @@ def main():
     Q-Learning Variable Values
     """
 
-    #calculate the q values for the algorithm
+    # Calculate the q values for the algorithm
     #q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
-    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate)
+    q_values = RL.Q_learning(world, rewards, episodes,
+                             ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate_epsilon,
+                             decay_rate_alpha)
     q_policy = RL.final_policy(10, 10, rewards, q_values, ACTIONS)
     print(q_policy)
     sys.exit()

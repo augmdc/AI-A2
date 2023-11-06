@@ -7,49 +7,33 @@ Created on Sat Oct 28 16:46:50 2023
 """
 
 import numpy as np
-import sys, time
-
 import Constants
 
 WALL_VALUE = Constants.WALL_VALUE
 GOAL_REWARD = Constants.GOAL_REWARD
 
 # Moves robot multiple times for an "episode"
-def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_reward, step_var, decay_rate):
-    q_values = np.zeros((10, 10, 4))
-    #print(rewards)
+def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
+               living_reward, step_var, decay_rate_epsilon,
+               decay_rate_alpha):
+    
+    # Q-values initialized with small random values to improve learning process
+    q_values = np.random.uniform(low=0.0, high=0.01, size=(10, 10, 4))
 
     # Every iteration is an episode
     # Decrease epsilon after every episode
     min_epsilon = 0.1
 
+    initial_alpha = alpha
     for episode in range(episodes):
+        alpha = initial_alpha / (1 + episode * decay_rate_alpha)  # Update alpha
         steps = 0
         i, j = world.robot_pos # Capture initial position
         coords_seen = set()
         
         while steps < step_var:
-            """
-            random_value = np.random.rand()
-            #Exploration
-            if random_value < epsilon: 
-                action_index = np.random.randint(0, len(actions))
-           #Exploitation
-            else:
-                action_index = np.argmax(q_values[i, j])
-                
-            actual_action = actions[action_index]
-            new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
-                
-            # While the new coordinates are in coords_seen, go to next action possible
             
-            while (new_i, new_j) is in coords_seen:
-                actions_left = actions.pop(action_index)
-                np.random.randint(0, len(actions))
-
-            """
-            
-            # APPROACH 1
+            # Ensure agent only visits squares that they have not seen yet
             possible_action_indexes = [0, 1, 2, 3]
             while True:
                 random_value = np.random.rand()
@@ -91,17 +75,12 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, living_
                 # If hits goal, restart episode
                 if rewards[new_i, new_j] == GOAL_REWARD:
                     break
-            # EXPERIMENT: make q_value large negative value to make sure that agent does not hit the wall
-            """
-            else:
-                q_values[new_i,new_j, action_index] = WALL_VALUE
-            """
                 
             #print(f"Episode {episode}, step {steps}")
             steps += 1
           
         if min_epsilon < epsilon:
-            epsilon -= decay_rate
+            epsilon -= decay_rate_epsilon
             
     return q_values
 
