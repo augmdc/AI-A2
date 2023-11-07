@@ -16,15 +16,10 @@ TRAP_PENALTY = Constants.TRAP_PENALTY
 
 # Moves robot multiple times for an "episode"
 def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
-               living_reward, step_var, decay_rate_epsilon,
+               living_reward, step_var, decay_rate_epsilon, max_epsilon, min_epsilon,
                decay_rate_alpha):
     
-    # Q-values initialized with small random values to improve learning process
-    q_values = np.random.uniform(low=0.0, high=0.01, size=(10, 10, 4))
-
-    # Every iteration is an episode
-    # Decrease epsilon after every episode
-    min_epsilon = 0.1
+    q_values = np.zeros((10, 10, 4))
 
     initial_alpha = alpha
     for episode in range(episodes):
@@ -32,6 +27,22 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
         steps = 0
         i, j = world.robot_pos # Capture initial position
         coords_seen = set()
+        
+        # Initialize vars related to epsilon scaling
+        # Epsilon is scaled down proportionally to percent_cells_explored
+        # This ensures that exploration and exploitation are balanced based on current world knowledge
+        epsilon = max_epsilon  # Start by favouring exploration over exploitation
+        epsilon_range = max_epsilon - min_epsilon
+        num_cells_explored = 0  # Count of novel cells visited
+        percent_cells_explored = 0
+        unvisited_cells = []  # Track coodinates of all cells that are not walls, and have not been explored in any episode
+        
+        # Populate unvisited_cells list
+        for i in range(world.size):
+            for j in range(world.size):
+                if rewards[i][j] != WALL_VALUE:
+                    unvisited_cells.append([i,j])
+        total_cells = len(unvisited_cells)  # Number of cells in world that are not walls
         
         while steps < step_var:
             
@@ -55,7 +66,6 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
                 new_j = max(0, min(10 - 1, new_j))
                 
                 if (new_i, new_j) not in coords_seen:
-                    #print("Break")
                     break
                 else: # Remove the action previously seen
                     possible_action_indexes.remove(action_index)
@@ -80,6 +90,7 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
                 
                 # If hits goal, restart episode
                 if rewards[new_i, new_j] == GOAL_REWARD:
+                    #print("Break")
                     break
 
             # Clip the Q-value if it has reached GOLD, TRAP, GOAL or WALL
@@ -94,8 +105,12 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
 
             steps += 1
           
-        if min_epsilon < epsilon:
-            epsilon -= decay_rate_epsilon
+        # Update vars related to epsilon scaling
+        num_cells_explored = total_cells - len(unvisited_cells)
+        percent_cells_explored = num_cells_explored / total_cells
+        
+        # Scale epsilon down proportionally to percent_cells_explored
+        epsilon = max_epsilon - (epsilon_range * percent_cells_explored)
             
     return q_values
 
