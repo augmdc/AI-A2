@@ -44,7 +44,7 @@ alpha = 0.5
 decay_rate_alpha = 0.01
 
 # Number of iterations
-episodes = 10000
+episodes = 1000
 
 # Number of steps per episode
 steps_var = 15
@@ -123,8 +123,7 @@ class GridWorld:
         if isMDP:
             final_policy_grid = MDP.final_policy(n, n, rewards, values, actions)
         else:
-            final_policy_grid = RL.Q_learning(world, rewards, episodes, actions, gamma,
-                                              epsilon, alpha, living_reward, steps_var, decay_rate_epsilon, decay_rate_alpha)
+            final_policy_grid = RL.final_policy(n, n, rewards, values, actions)
 
         current_position_direction = final_policy_grid[x, y]
         directions_map = {"←": "left", "↑": "up", "→": "right", "↓": "down"}
@@ -147,7 +146,7 @@ class GridWorld:
             if isMDP:
                 values = MDP.value_iteration(n, n, actions, rewards, noise_prob, -1)
             else:
-                values = QLearning.QLearning(rewards, actions, 100)
+                values = RL.Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, -1, 15, decay_rate_epsilon, decay_rate_alpha)
         self.robot_pos = (x, y)
         self.grid[x][y] = 0  # Clear the cell after the robot moves
         self.score += reward
@@ -226,13 +225,9 @@ def main():
     """
 
     # Calculate the q values for the algorithm
-    #q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
     q_values = RL.Q_learning(world, rewards, episodes,
-                             ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate_epsilon,
+                             ACTIONS, gamma, 1, 0.5, living_reward, steps_var, decay_rate_epsilon,
                              decay_rate_alpha)
-    q_policy = RL.final_policy(10, 10, rewards, q_values, ACTIONS)
-    print(q_policy)
-    sys.exit()
     
     #get input from the user to determine which algorithm to run
     algorithm = ""

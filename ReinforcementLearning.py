@@ -11,6 +11,8 @@ import Constants
 
 WALL_VALUE = Constants.WALL_VALUE
 GOAL_REWARD = Constants.GOAL_REWARD
+GOLD_REWARD = Constants.GOLD_REWARD
+TRAP_PENALTY = Constants.TRAP_PENALTY
 
 # Moves robot multiple times for an "episode"
 def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
@@ -47,14 +49,18 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
                 actual_action = actions[action_index]
                 
                 new_i, new_j = i + actual_action[0], j + actual_action[1] # New position
+
+                # Ensure the agent stays within the grid
+                new_i = max(0, min(10 - 1, new_i))
+                new_j = max(0, min(10 - 1, new_j))
                 
                 if (new_i, new_j) not in coords_seen:
                     #print("Break")
                     break
                 else: # Remove the action previously seen
                     possible_action_indexes.remove(action_index)
-          
-            
+
+
             # Ensure the agent stays within the grid
             new_i = max(0, min(10 - 1, new_i))
             new_j = max(0, min(10 - 1, new_j))
@@ -75,8 +81,17 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
                 # If hits goal, restart episode
                 if rewards[new_i, new_j] == GOAL_REWARD:
                     break
-                
-            #print(f"Episode {episode}, step {steps}")
+
+            # Clip the Q-value if it has reached GOLD, TRAP, GOAL or WALL
+            if rewards[new_i, new_j] == GOLD_REWARD:
+                q_values[i, j, action_index] = min(q_values[i, j, action_index], 10.0)
+            elif rewards[new_i, new_j] == TRAP_PENALTY:
+                q_values[i, j, action_index] = max(q_values[i, j, action_index], -10.0)
+            elif rewards[new_i, new_j] == WALL_VALUE:
+                q_values[i, j, action_index] = WALL_VALUE
+            elif rewards[new_i, new_j] == GOAL_REWARD:
+                q_values[i, j, action_index] = max(q_values[i, j, action_index], GOAL_REWARD)
+
             steps += 1
           
         if min_epsilon < epsilon:
@@ -94,8 +109,15 @@ def final_policy(n, m, rewards, q_values, actions):
                 continue
             
             # Choose best among q_values for each square (4 per [n, m] pair)
-            best_action_idx = np.argmax(q_values[i, j])
-            final_policy[i][j] = best_action_idx
+            flag = True
+            while flag:
+                best_action_idx = np.argmax(q_values[i, j])
+                final_policy[i][j] = best_action_idx
+                ni, nj = i + actions[best_action_idx][0], j + actions[best_action_idx][1]
+                if not (0 <= ni < n and 0 <= nj < m) or rewards[ni, nj] == WALL_VALUE:
+                    q_values[i, j, best_action_idx] = WALL_VALUE
+                else:
+                    flag = False
     
     # Convert numeric policy to direction symbols, leaving "*" as is
     directions_map = {0: "←", 1: "↑", 2: "→", 3: "↓", "*": "*"}
