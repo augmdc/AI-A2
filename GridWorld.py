@@ -41,7 +41,7 @@ gamma = 0.9
 
 # Learning rate alpha for Q-learning
 alpha = 0.5
-decay_rate_alpha = 0.01
+decay_rate_alpha = 0.0001
 
 # Number of iterations
 episodes = 1000
@@ -53,10 +53,10 @@ living_reward = -1
 
 # Exploration rate (epsilon) for epsilon-greedy straetegy
 epsilon = 1
-decay_rate_epsilon = 0.001
+decay_rate_epsilon = 0.00001
 
 # Change random seed for different results
-random.seed(100)
+random.seed(64) #note - if you're messing with things 55 is a good one to try since the optimal path involves moving through a trap
 
 #Gridworld object
 class GridWorld:
@@ -146,7 +146,7 @@ class GridWorld:
             if isMDP:
                 values = MDP.value_iteration(n, n, actions, rewards, noise_prob, -1)
             else:
-                values = RL.Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha, -1, 15, decay_rate_epsilon, decay_rate_alpha)
+                values = RL.Q_learning(world, rewards, episodes, actions, gamma, 1, 0.5, -1, 15, decay_rate_epsilon, decay_rate_alpha)
         self.robot_pos = (x, y)
         self.grid[x][y] = 0  # Clear the cell after the robot moves
         self.score += reward
@@ -225,9 +225,7 @@ def main():
     """
 
     # Calculate the q values for the algorithm
-    q_values = RL.Q_learning(world, rewards, episodes,
-                             ACTIONS, gamma, 1, 0.5, living_reward, steps_var, decay_rate_epsilon,
-                             decay_rate_alpha)
+    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, 1, 0.5, -1, 15, decay_rate_epsilon, decay_rate_alpha)
     
     #get input from the user to determine which algorithm to run
     algorithm = ""
@@ -241,7 +239,7 @@ def main():
         screen.fill(EMPTY_COLOR)
         draw_grid(world, screen)
         pygame.display.flip()
-        clock.tick(4)  # FPS
+        clock.tick(8)  # FPS
         
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
