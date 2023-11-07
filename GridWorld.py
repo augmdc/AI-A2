@@ -54,6 +54,8 @@ living_reward = -1
 # Exploration rate (epsilon) for epsilon-greedy straetegy
 epsilon = 1
 decay_rate_epsilon = 0.001
+max_epsilon = 1
+min_epsilon = 0.1
 
 # Change random seed for different results
 random.seed(100)
@@ -229,6 +231,7 @@ def main():
     #q_values = QLearning.QLearning(rewards, ACTIONS, 100, alpha, epsilon)
     q_values = RL.Q_learning(world, rewards, episodes,
                              ACTIONS, gamma, epsilon, alpha, living_reward, steps_var, decay_rate_epsilon,
+                             max_epsilon, min_epsilon,
                              decay_rate_alpha)
     q_policy = RL.final_policy(10, 10, rewards, q_values, ACTIONS)
     print(q_policy)
