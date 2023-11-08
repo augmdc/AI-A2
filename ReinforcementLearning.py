@@ -16,13 +16,30 @@ TRAP_PENALTY = Constants.TRAP_PENALTY
 
 
 # Moves robot multiple times for an "episode"
-def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
-               living_reward, step_var, decay_rate_epsilon,
+def Q_learning(world, rewards, episodes, actions, gamma, alpha,
+               living_reward, step_var, min_epsilon, max_epsilon,
                decay_rate_alpha):
     q_values = np.zeros((10, 10, 4))
     q_values = np.random.uniform(low=0.0, high=0.01, size=(10, 10, 4))
     initial_alpha = alpha
 
+    # Initialize vars related to epsilon scaling
+    # Epsilon is scaled down proportionally to percent_cells_explored
+    # This ensures that exploration and exploitation are balanced based on current world knowledge
+    epsilon = max_epsilon  # Start by favouring exploration over exploitation
+    epsilon_range = max_epsilon - min_epsilon
+    num_cells_explored = 0  # Count of novel cells visited
+    percent_cells_explored = 0
+    unvisited_cells = []  # Track coodinates of all cells that are not walls, and have not been explored in any episode
+    
+    # Populate unvisited_cells list
+    for i in range(world.size):
+        for j in range(world.size):
+            if rewards[i][j] != WALL_VALUE:
+                unvisited_cells.append([i,j])
+    total_cells = len(unvisited_cells)  # Number of cells in world that are not walls
+
+    # Every iteration is an episode
     for episode in range(episodes):
         alpha = initial_alpha / (1 + episode * decay_rate_alpha)  # Update alpha
         steps = 0
@@ -68,6 +85,9 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
                 # Update current position
                 i, j = new_i, new_j
 
+                # Remove current cell from unvisited_cells list (for epsilon scaling)
+                if [i,j] in unvisited_cells:
+                    unvisited_cells.remove([i,j])
 
             # Clip the Q-value if it has reached GOLD, TRAP, GOAL or WALL
             if rewards[new_i, new_j] == GOLD_REWARD:
@@ -82,9 +102,10 @@ def Q_learning(world, rewards, episodes, actions, gamma, epsilon, alpha,
 
             steps += 1
 
-        # Scale epsilon down
-        if 0.1 < epsilon:
-            epsilon -= decay_rate_epsilon
+        # Scale epsilon down proportionally to percent_cells_explored
+        num_cells_explored = total_cells - len(unvisited_cells)
+        percent_cells_explored = num_cells_explored / total_cells
+        epsilon = max_epsilon - (epsilon_range * percent_cells_explored)
 
     return q_values
 

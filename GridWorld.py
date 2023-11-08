@@ -49,16 +49,19 @@ episodes = 1000
 # Number of steps per episode
 steps_var = 15
 
+# Step penalty
 living_reward = -1
 
-# Exploration rate (epsilon) for epsilon-greedy straetegy
-epsilon = 1
-decay_rate_epsilon = 0.00001
+# Exploration rate (epsilon) for epsilon-greedy strategy
+# Higher epsilon values prioritize exploration over exploitation
+# Epsilon is scaled dynamically based on percentage of world explored
+min_epsilon = 0.1
+max_epsilon = 1
 
 # Change random seed for different results
 random.seed(64) #note - if you're messing with things 55 is a good one to try since the optimal path involves moving through a trap
 
-#Gridworld object
+# Gridworld object
 class GridWorld:
     def __init__(self, size=GRID_SIZE):
         self.size = size
@@ -94,7 +97,7 @@ class GridWorld:
             y -= 1
         elif direction == "right" and y < self.size-1 and self.grid[x][y+1] != WALL_VALUE:
             y += 1
-        reward = self.grid[x][y] - 1  # step penalty
+        reward = self.grid[x][y] - 1  # Step penalty
         self.robot_pos = (x, y)
         self.grid[x][y] = 0  # Clear the cell after the robot moves
         self.score += reward
@@ -119,7 +122,7 @@ class GridWorld:
         """
         x, y = self.robot_pos
         n = rewards[:, 0].size
-        #uses the different policy generation functions based on which algorithm was used
+        # Uses the different policy generation functions based on which algorithm was used
         if isMDP:
             final_policy_grid = MDP.final_policy(n, n, rewards, values, actions)
         else:
@@ -138,15 +141,15 @@ class GridWorld:
         elif direction == "right" and y < self.size-1 and self.grid[x][y+1] != WALL_VALUE:
             y += 1
 
-        reward = self.grid[x][y] - 1  # step penalty
-        #if we step on a gold space, we need to re-run the algorithm, since the rewards
-        #have changed
+        reward = self.grid[x][y] - 1  # Step penalty
+        # If we step on a gold space, we need to re-run the algorithm, since the rewards
+        # have changed
         if reward == GOLD_REWARD - 1:
             rewards[x, y] = 0
             if isMDP:
                 values = MDP.value_iteration(n, n, actions, rewards, noise_prob, -1)
             else:
-                values = RL.Q_learning(world, rewards, episodes, actions, gamma, 1, 0.5, -1, 15, decay_rate_epsilon, decay_rate_alpha)
+                values = RL.Q_learning(world, rewards, episodes, actions, gamma, 0.5, -1, 15, min_epsilon, max_epsilon, decay_rate_alpha)
         self.robot_pos = (x, y)
         self.grid[x][y] = 0  # Clear the cell after the robot moves
         self.score += reward
@@ -213,7 +216,7 @@ def main():
     ACTIONS = [(0, -1), (-1, 0), (0, 1), (1, 0)] #left up right down
     # DO NOT CHANGE
 
-    #generate values for value iterations
+    # Generate values for value iterations
     values = MDP.value_iteration(n, n, ACTIONS, rewards, noise_prob, -1)
 
     move_counter = 0  # Initialize a counter
@@ -225,9 +228,9 @@ def main():
     """
 
     # Calculate the q values for the algorithm
-    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, 1, 0.5, -1, 15, decay_rate_epsilon, decay_rate_alpha)
+    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, 0.5, -1, 15, min_epsilon, max_epsilon, decay_rate_alpha)
     
-    #get input from the user to determine which algorithm to run
+    # Get input from the user to determine which algorithm to run
     algorithm = ""
     while algorithm != "0" and algorithm != "1":
         algorithm = input("Input either a 0 or 1. 0 - MDP, 1 - Q-Learning\n")
