@@ -44,7 +44,7 @@ alpha = 0.5
 decay_rate_alpha = 0.0001
 
 # Number of iterations
-episodes = 1000
+episodes = 10000
 
 # Number of steps per episode
 steps_var = 15
@@ -57,9 +57,11 @@ living_reward = -1
 # Epsilon is scaled dynamically based on percentage of world explored
 min_epsilon = 0.1
 max_epsilon = 1
+epsilon = 1
+decay_rate_epsilon = 0.01
 
 # Change random seed for different results
-random.seed(64) #note - if you're messing with things 55 is a good one to try since the optimal path involves moving through a trap
+random.seed(1) #note - if you're messing with things 55 is a good one to try since the optimal path involves moving through a trap
 
 # Gridworld object
 class GridWorld:
@@ -228,7 +230,9 @@ def main():
     """
 
     # Calculate the q values for the algorithm
-    q_values = RL.Q_learning(world, rewards, episodes, ACTIONS, gamma, 0.5, -1, 15, min_epsilon, max_epsilon, decay_rate_alpha)
+    q_values = RL.Q_learning(world, rewards, episodes,
+                             ACTIONS, gamma, alpha, living_reward, steps_var, epsilon, decay_rate_epsilon,
+                             decay_rate_alpha)
     
     # Get input from the user to determine which algorithm to run
     algorithm = ""
