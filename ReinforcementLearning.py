@@ -81,8 +81,8 @@ def Q_learning(world, rewards, episodes, actions, gamma, alpha,
                 break
 
             steps += 1
-
-        epsilon -= decay_rate_epsilon
+        if epsilon < 0.1:
+            epsilon -= decay_rate_epsilon
 
     return q_values
 
